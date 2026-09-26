@@ -15,7 +15,7 @@ export function AdminBracket({ rounds, champion }: { rounds: readonly RoundView[
   async function choose(match: PublicMatchView, player: PublicPlayer) {
     if (busy || match.winnerId === player.id) return;
     setPending(`${match.id}:${player.id}`);
-    await run("/api/admin/match", { matchId: match.id, winnerId: player.id }, (d) =>
+    await run("/api/admin/match", { action: "win", matchId: match.id, winnerId: player.id }, (d) =>
       d.championDecided ? `¡${player.gamerTag} es el campeón!` : `${player.gamerTag} avanza.`,
     );
     setPending(null);

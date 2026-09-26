@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Loader2, Mail } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,19 +8,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fieldErrors, registrationSchema } from "@/core/application/schemas";
+import { formatMobileLegendsId, ML_SERVER_ID, ML_USER_ID } from "@/core/domain/participant";
 import { site } from "@/lib/site";
+import { MlbbIdFields, type MlbbIdValue } from "./mlbb-id-fields";
 import { TikTokIcon } from "./tiktok-icon";
 
-type Errors = Partial<Record<"gamerTag" | "email" | "mobileLegendsId" | "acceptedRules" | "form", string>>;
+type Errors = Partial<
+  Record<"gamerTag" | "mobileLegendsId" | "mlUserId" | "mlServerId" | "acceptedRules" | "form", string>
+>;
 
 export function RegistrationForm() {
   const router = useRouter();
-  const ids = { tag: useId(), email: useId(), ml: useId(), rules: useId() };
-  const [values, setValues] = useState({ gamerTag: "", email: "", mobileLegendsId: "", website: "" });
+  const ids = { tag: useId(), rules: useId() };
+  const [values, setValues] = useState({ gamerTag: "", website: "" });
+  const [ml, setMl] = useState<MlbbIdValue>({ userId: "", serverId: "" });
   const [accepted, setAccepted] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<{ gamerTag: string; emailSent: boolean; email: string } | null>(null);
+  const [done, setDone] = useState<{ gamerTag: string; mobileLegendsId: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const set = (field: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,13 +33,31 @@ export function RegistrationForm() {
     setErrors((prev) => ({ ...prev, [field]: undefined, form: undefined }));
   };
 
+  const setMlField = (field: keyof MlbbIdValue, v: string) => {
+    setMl((prev) => ({ ...prev, [field]: v }));
+    const key = field === "userId" ? "mlUserId" : "mlServerId";
+    setErrors((prev) => ({ ...prev, [key]: undefined, mobileLegendsId: undefined, form: undefined }));
+  };
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const payload = { ...values, acceptedRules: accepted };
+    const mobileLegendsId = ml.userId || ml.serverId ? formatMobileLegendsId(ml.userId, ml.serverId) : "";
+    const payload = { ...values, mobileLegendsId, acceptedRules: accepted };
     // Validación local solo para feedback inmediato. El servidor vuelve a validar todo.
+    const idErrors: Errors = {
+      mlUserId: ML_USER_ID.test(ml.userId) ? undefined : ml.userId ? "El User ID lleva de 5 a 12 números." : "Escribe tu User ID.",
+      mlServerId: ML_SERVER_ID.test(ml.serverId)
+        ? undefined
+        : ml.serverId
+          ? "El Server ID lleva de 2 a 6 números."
+          : "Escribe tu Server ID (el número entre paréntesis).",
+    };
     const local = registrationSchema.safeParse(payload);
-    if (!local.success) {
-      setErrors(fieldErrors(local.error));
+    if (!local.success || idErrors.mlUserId || idErrors.mlServerId) {
+      const found = local.success ? {} : fieldErrors(local.error);
+      // El error combinado sobra si ya se marcó cada casilla.
+      if (idErrors.mlUserId || idErrors.mlServerId) delete found.mobileLegendsId;
+      setErrors({ ...found, ...idErrors });
       return;
     }
     setSubmitting(true);
@@ -46,11 +69,11 @@ export function RegistrationForm() {
         body: JSON.stringify(payload),
       });
       const body = (await res.json().catch(() => null)) as
-        | { ok: true; gamerTag: string; confirmationEmailSent: boolean }
+        | { ok: true; gamerTag: string }
         | { error: { code: string; message: string; fields?: Record<string, string> } }
         | null;
       if (res.ok && body && "ok" in body) {
-        setDone({ gamerTag: body.gamerTag, emailSent: body.confirmationEmailSent, email: values.email.trim() });
+        setDone({ gamerTag: body.gamerTag, mobileLegendsId });
         startTransition(() => router.refresh());
         return;
       }
@@ -74,14 +97,10 @@ export function RegistrationForm() {
           <span className="font-semibold text-foreground">{done.gamerTag}</span>, tu lugar está guardado. El sorteo se hace
           antes del torneo y tu nombre aparecerá en el bracket.
         </p>
-        {done.emailSent && (
-          <p className="flex max-w-sm items-center gap-2 rounded-md border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-muted-foreground">
-            <Mail className="size-4 shrink-0 text-brand" aria-hidden />
-            <span>
-              Te enviamos la confirmación a <span className="text-foreground">{done.email}</span>. Si no la ves, revisa spam.
-            </span>
-          </p>
-        )}
+        <p className="max-w-sm rounded-md border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-muted-foreground">
+          Si ganas, el premio va a tu ID <span className="text-foreground">{done.mobileLegendsId}</span>. Toma captura de
+          esta pantalla como comprobante.
+        </p>
         <Button asChild variant="outline">
           <a href={site.tiktokUrl} target="_blank" rel="noopener noreferrer">
             <TikTokIcon /> Sigue a {site.handle}
@@ -112,47 +131,11 @@ export function RegistrationForm() {
         <FieldError id={`${ids.tag}-err`} message={errors.gamerTag} />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={ids.email}>
-          Correo electrónico <span className="text-brand">*</span>
-        </Label>
-        <Input
-          id={ids.email}
-          name="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          maxLength={254}
-          placeholder="tu@correo.com"
-          value={values.email}
-          onChange={set("email")}
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={`${ids.email}-hint${errors.email ? ` ${ids.email}-err` : ""}`}
-          required
-        />
-        <p id={`${ids.email}-hint`} className="text-xs text-muted-foreground">
-          Solo para contactarte por el torneo. Nunca se muestra públicamente.
-        </p>
-        <FieldError id={`${ids.email}-err`} message={errors.email} />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={ids.ml}>
-          ID de Mobile Legends <span className="font-normal normal-case tracking-normal text-muted-foreground">(opcional)</span>
-        </Label>
-        <Input
-          id={ids.ml}
-          name="mobileLegendsId"
-          inputMode="numeric"
-          maxLength={40}
-          placeholder="123456789 (1234)"
-          value={values.mobileLegendsId}
-          onChange={set("mobileLegendsId")}
-          aria-invalid={Boolean(errors.mobileLegendsId)}
-          aria-describedby={errors.mobileLegendsId ? `${ids.ml}-err` : undefined}
-        />
-        <FieldError id={`${ids.ml}-err`} message={errors.mobileLegendsId} />
-      </div>
+      <MlbbIdFields
+        value={ml}
+        onChange={setMlField}
+        errors={{ userId: errors.mlUserId, serverId: errors.mlServerId, combined: errors.mobileLegendsId }}
+      />
 
       {/* Campo trampa: invisible para personas, tentador para bots. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
@@ -176,7 +159,11 @@ export function RegistrationForm() {
             className="mt-0.5"
           />
           <label htmlFor={ids.rules} className="text-sm leading-relaxed text-silver/90">
-            Acepto que mi Gamer Tag aparezca públicamente en el bracket del torneo.
+            Acepto las{" "}
+            <a href="#reglas" className="text-brand-300 underline underline-offset-2 hover:text-brand">
+              reglas del torneo
+            </a>{" "}
+            y que mi Gamer Tag aparezca públicamente en el bracket.
           </label>
         </div>
         <FieldError id={`${ids.rules}-err`} message={errors.acceptedRules} />

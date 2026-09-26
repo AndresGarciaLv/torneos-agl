@@ -2,8 +2,11 @@ import { DomainError } from "./errors";
 import { isBye, isPlayable, type Match, type Slot } from "./match";
 
 export const MIN_PARTICIPANTS = 2;
-/** Tope razonable: 512 jugadores son 9 rondas, suficiente para un torneo de comunidad. */
-export const MAX_PARTICIPANTS = 512;
+/**
+ * Cupo del torneo: 16 jugadores, un cuadro de 4 rondas. Con menos, el cuadro
+ * baja a la potencia de 2 siguiente y los BYE se reparten; nunca pasa de 16.
+ */
+export const MAX_PARTICIPANTS = 16;
 
 export interface MatchRef {
   readonly round: number;
@@ -171,6 +174,113 @@ export function decideMatch(matches: readonly Match[], matchId: string, winnerId
   };
 }
 
+/** Encuentros de primera ronda con BYE donde todavía cabe un jugador de último momento. */
+export function openByeMatches(matches: readonly Match[]): Match[] {
+  return matches.filter((m) => {
+    if (!isBye(m)) return false;
+    if (m.nextMatchId === null) return true;
+    const next = matches.find((x) => x.id === m.nextMatchId);
+    // Si el que pasó por BYE ya jugó su segunda ronda, meter a alguien antes lo borraría de la historia.
+    return next !== undefined && next.winnerId === null;
+  });
+}
+
+export interface ByeFill {
+  readonly matchId: string;
+  /** La casilla vacía del BYE, donde entra el nuevo. */
+  readonly slot: Slot;
+  /** De dónde se retira al que había avanzado por BYE; null si el BYE era la final. */
+  readonly retract: { readonly matchId: string; readonly slot: Slot } | null;
+}
+
+/**
+ * Mete a un jugador nuevo en un cuadro ya sorteado sin tocar a nadie más: el BYE
+ * elegido se convierte en un encuentro normal y quien iba a pasar solo vuelve a
+ * primera ronda. `pick(max)` elige el hueco (azar criptográfico en producción).
+ */
+export function planByeFill(matches: readonly Match[], pick: (max: number) => number): ByeFill {
+  const open = openByeMatches(matches);
+  if (open.length === 0) {
+    throw new DomainError(
+      "BRACKET_FULL",
+      "El cuadro no tiene huecos libres. Para meter a alguien más hay que reabrir inscripciones y volver a sortear.",
+    );
+  }
+  const i = pick(open.length);
+  const m = open[i];
+  if (!Number.isInteger(i) || m === undefined) throw new RangeError("pick() devolvió un índice fuera de rango.");
+  return {
+    matchId: m.id,
+    slot: m.player1Id === null ? 1 : 2,
+    retract: m.nextMatchId !== null && m.nextSlot !== null ? { matchId: m.nextMatchId, slot: m.nextSlot } : null,
+  };
+}
+
+export interface UndoDecision {
+  readonly matchId: string;
+  /** Casilla del encuentro siguiente que queda vacía otra vez; null en la final. */
+  readonly retract: { readonly matchId: string; readonly slot: Slot } | null;
+}
+
+/** Deja un encuentro sin ganador. Solo mientras el siguiente no se haya jugado. */
+export function planUndo(matches: readonly Match[], matchId: string): UndoDecision {
+  const match = matches.find((m) => m.id === matchId);
+  if (!match) throw new DomainError("NOT_FOUND", "El encuentro no existe en este torneo.");
+  if (isBye(match)) throw new DomainError("MATCH_NOT_READY", "Un BYE no tiene resultado que deshacer.");
+  if (match.winnerId === null) throw new DomainError("MATCH_NOT_READY", "Este encuentro todavía no tiene ganador.");
+  if (match.nextMatchId === null) return { matchId, retract: null };
+  const next = matches.find((m) => m.id === match.nextMatchId);
+  if (!next || match.nextSlot === null) {
+    throw new DomainError("INVALID_STATE", "El bracket está incompleto: falta el encuentro siguiente.");
+  }
+  if (next.winnerId !== null) {
+    throw new DomainError("DOWNSTREAM_DECIDED", "El encuentro siguiente ya tiene ganador. Deshaz primero ese resultado.");
+  }
+  return { matchId, retract: { matchId: next.id, slot: match.nextSlot } };
+}
+
+export interface Withdrawal {
+  /** El encuentro de primera ronda que se convierte en BYE para el rival. */
+  readonly matchId: string;
+  readonly slot: Slot;
+  readonly opponentId: string;
+  readonly advance: { readonly matchId: string; readonly slot: Slot };
+}
+
+/**
+ * Baja de un jugador con el cuadro sorteado. Solo se puede mientras su encuentro
+ * de primera ronda no se haya jugado: el rival pasa por BYE y queda un hueco que
+ * la siguiente alta rellena. En cualquier otro punto se usa «Sustituir» o se le
+ * da la victoria al rival.
+ */
+export function planWithdrawal(matches: readonly Match[], playerId: string): Withdrawal {
+  const involved = matches.filter((m) => m.player1Id === playerId || m.player2Id === playerId);
+  const first = involved.find((m) => m.round === 1);
+  if (!first) throw new DomainError("NOT_FOUND", "Ese jugador no está en el cuadro.");
+  if (isBye(first) || involved.length > 1) {
+    throw new DomainError(
+      "INVALID_STATE",
+      "Ya avanzó de ronda. Para quitarlo usa «Sustituir», o marca como ganador a su rival.",
+    );
+  }
+  if (first.winnerId !== null) {
+    throw new DomainError("INVALID_STATE", "Su encuentro ya se jugó. Deshaz primero el resultado.");
+  }
+  if (first.nextMatchId === null || first.nextSlot === null) {
+    throw new DomainError("INVALID_STATE", "Es la final: sin él no hay torneo. Usa «Sustituir».");
+  }
+  const slot: Slot = first.player1Id === playerId ? 1 : 2;
+  const opponentId = slot === 1 ? first.player2Id : first.player1Id;
+  if (opponentId === null) throw new DomainError("INVALID_STATE", "El encuentro no tiene rival.");
+  return { matchId: first.id, slot, opponentId, advance: { matchId: first.nextMatchId, slot: first.nextSlot } };
+}
+
+/** El estado se deduce del cuadro, no se arrastra: así nunca queda desfasado tras deshacer o corregir. */
+export function statusOf(matches: readonly Match[]): "bracket_ready" | "live" | "finished" {
+  if (championId(matches) !== null) return "finished";
+  return countPlayable(matches).decided > 0 ? "live" : "bracket_ready";
+}
+
 export function roundCountOf(matches: readonly Pick<Match, "round">[]): number {
   return matches.reduce((max, m) => Math.max(max, m.round), 0);
 }
@@ -196,6 +306,13 @@ export function currentRound(matches: readonly Match[]): number | null {
 export function championId(matches: readonly Match[]): string | null {
   const final = matches.find((m) => m.nextMatchId === null);
   return final?.winnerId ?? null;
+}
+
+/** Segundo lugar: quien perdió la final. null mientras la final no tenga ganador. */
+export function runnerUpId(matches: readonly Match[]): string | null {
+  const final = matches.find((m) => m.nextMatchId === null);
+  if (!final?.winnerId) return null;
+  return final.player1Id === final.winnerId ? final.player2Id : final.player1Id;
 }
 
 /** Encuentros reales (sin contar BYE): cuántos hay y cuántos ya tienen ganador. */

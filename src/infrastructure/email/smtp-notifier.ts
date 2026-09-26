@@ -59,9 +59,11 @@ export class SmtpRegistrationNotifier implements RegistrationNotifier {
   async notify(notice: RegistrationNotice): Promise<RegistrationNotifyResult> {
     const links = this.templateLinks;
     const [participant, organizer] = await Promise.all([
-      this.send("participant", notice.email, participantEmail(notice, links), this.config.replyTo),
+      notice.email
+        ? this.send("participant", notice.email, participantEmail(notice, links), this.config.replyTo)
+        : Promise.resolve(false),
       this.config.organizerEmail
-        ? this.send("organizer", this.config.organizerEmail, organizerEmail(notice, links), notice.email)
+        ? this.send("organizer", this.config.organizerEmail, organizerEmail(notice, links), notice.email ?? undefined)
         : Promise.resolve(false),
     ]);
     return { participantNotified: participant, organizerNotified: organizer };

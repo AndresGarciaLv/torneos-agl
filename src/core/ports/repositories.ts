@@ -1,6 +1,6 @@
 import type { BracketPlan } from "../domain/bracket";
 import type { Match, Slot } from "../domain/match";
-import type { NewParticipant, Participant, PublicPlayer } from "../domain/participant";
+import type { NewParticipant, Participant, ParticipantChanges, PublicPlayer } from "../domain/participant";
 import type { Tournament, TournamentStatus } from "../domain/tournament";
 
 export interface TournamentRepository {
@@ -11,10 +11,14 @@ export interface TournamentRepository {
 export interface ParticipantRepository {
   /**
    * Inserta un participante. Si choca con una restricción de unicidad lanza
-   * DomainError DUPLICATE_EMAIL o DUPLICATE_GAMER_TAG: la base de datos manda.
+   * DomainError DUPLICATE_EMAIL, DUPLICATE_GAMER_TAG o DUPLICATE_ML_ID: la base de datos manda.
    */
   insert(tournamentId: string, participant: NewParticipant): Promise<Participant>;
   count(tournamentId: string): Promise<number>;
+  /** Corrige Gamer Tag, correo e ID. null si no existía en este torneo. Mismos errores de unicidad que insert. */
+  update(tournamentId: string, participantId: string, changes: ParticipantChanges): Promise<Participant | null>;
+  /** Borra un inscrito. false si no existía en este torneo. */
+  delete(tournamentId: string, participantId: string): Promise<boolean>;
   /** Ids en orden de inscripción: la entrada del sorteo. */
   listIds(tournamentId: string): Promise<string[]>;
   /** Solo id y Gamer Tag. Nunca el correo. */
@@ -28,8 +32,12 @@ export interface MatchRepository {
   /** Borra el cuadro anterior (si lo hay) y persiste el nuevo con sus enlaces. */
   replaceBracket(tournamentId: string, plan: BracketPlan): Promise<void>;
   clear(tournamentId: string): Promise<void>;
-  setWinner(matchId: string, winnerId: string): Promise<void>;
-  setSlot(matchId: string, slot: Slot, participantId: string): Promise<void>;
+  /** Pone a `newId` en todas las casillas y victorias de `oldId`. Para sustituir a quien no se presentó. */
+  replacePlayer(tournamentId: string, oldId: string, newId: string): Promise<void>;
+  /** null deja el encuentro sin ganador. */
+  setWinner(matchId: string, winnerId: string | null): Promise<void>;
+  /** null deja la casilla vacía. */
+  setSlot(matchId: string, slot: Slot, participantId: string | null): Promise<void>;
 }
 
 export interface Repositories {

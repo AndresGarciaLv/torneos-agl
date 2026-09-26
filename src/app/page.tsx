@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/landing/how-it-works";
 import { LiveBanner } from "@/components/landing/live-banner";
 import { Prizes } from "@/components/landing/prizes";
 import { RegistrationSection } from "@/components/landing/registration-section";
+import { Rules } from "@/components/landing/rules";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
 import type { PublicTournamentView } from "@/core/application/views";
@@ -25,18 +26,30 @@ async function loadTournament(): Promise<PublicTournamentView | null> {
   }
 }
 
+/** La página se arma en cada petición: con la hora del servidor basta para cerrar el formulario. */
+function acceptsRegistrations(view: PublicTournamentView | null): boolean {
+  return view !== null && view.status === "registration" && Date.now() < new Date(view.registrationClosesAt).getTime();
+}
+
 export default async function HomePage() {
   const view = await loadTournament();
   const liveUpdates = view?.status === "bracket_ready" || view?.status === "live";
+  const registrationOpen = acceptsRegistrations(view);
   return (
     <>
       <SiteHeader />
       <main>
-        <Hero status={view?.status ?? null} participantCount={view?.participantCount ?? null} />
+        <Hero
+          status={view?.status ?? null}
+          participantCount={view?.participantCount ?? null}
+          schedule={view ? { startsAt: view.startsAt, registrationClosesAt: view.registrationClosesAt } : null}
+          registrationOpen={registrationOpen}
+        />
         <Prizes />
         <HeroRoster />
         <HowItWorks />
-        <RegistrationSection status={view?.status ?? null} />
+        <Rules />
+        <RegistrationSection status={view?.status ?? null} open={registrationOpen} />
         <BracketSection view={view} />
         <LiveBanner />
       </main>

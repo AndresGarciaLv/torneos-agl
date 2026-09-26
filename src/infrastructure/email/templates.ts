@@ -208,7 +208,7 @@ export function participantEmail(n: RegistrationNotice, links: EmailLinks): Rend
       card(
         row("Gamer Tag", tag, C.brand) +
           row("ID de MLBB", mlId) +
-          row("Correo", escapeHtml(n.email)) +
+          (n.email ? row("Correo", escapeHtml(n.email)) : "") +
           row("Inscripción", `#${n.participantNumber}`) +
           row("Fecha", escapeHtml(when.day)) +
           row("Hora", `${escapeHtml(when.time)} <span style="font-weight:400;color:${C.muted};">CDMX</span>`),
@@ -240,7 +240,7 @@ export function participantEmail(n: RegistrationNotice, links: EmailLinks): Rend
     "TU PASE DE JUGADOR",
     `Gamer Tag: ${n.gamerTag}`,
     `ID de MLBB: ${n.mobileLegendsId ?? "No lo indicaste"}`,
-    `Correo: ${n.email}`,
+    ...(n.email ? [`Correo: ${n.email}`] : []),
     `Inscripción: #${n.participantNumber}`,
     `Fecha: ${when.day}, ${when.time} (CDMX)`,
     "",
@@ -277,10 +277,13 @@ export function organizerEmail(n: RegistrationNotice, links: EmailLinks): Render
     body:
       eyebrow(`Nueva inscripción · #${n.participantNumber}`) +
       headline(`<span style="color:${C.brand};">${escapeHtml(n.gamerTag)}</span> entra a la arena`) +
-      para(`Se registró en el ${escapeHtml(n.tournamentName)} y ya quedó guardado en la base de datos. Responder este correo le escribe directo.`) +
+      para(
+        `Se registró en el ${escapeHtml(n.tournamentName)} y ya quedó guardado en la base de datos.` +
+          (n.email ? " Responder este correo le escribe directo." : ""),
+      ) +
       card(
         row("Gamer Tag", escapeHtml(n.gamerTag), C.brand) +
-          row("Correo", escapeHtml(n.email)) +
+          row("Correo", n.email ? escapeHtml(n.email) : "—") +
           row("ID de MLBB", n.mobileLegendsId ? escapeHtml(n.mobileLegendsId) : "—") +
           row("Inscritos", String(n.participantNumber)) +
           row("Registrado", escapeHtml(registeredAt)),
@@ -293,7 +296,7 @@ export function organizerEmail(n: RegistrationNotice, links: EmailLinks): Render
     `Nueva inscripción #${n.participantNumber} en el ${n.tournamentName}`,
     "",
     `Gamer Tag: ${n.gamerTag}`,
-    `Correo: ${n.email}`,
+    `Correo: ${n.email ?? "—"}`,
     `ID de MLBB: ${n.mobileLegendsId ?? "—"}`,
     `Inscritos: ${n.participantNumber}`,
     `Registrado: ${registeredAt} (hora de CDMX)`,

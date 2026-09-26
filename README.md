@@ -2,7 +2,7 @@
 
 Landing, inscripción y bracket del torneo 1 vs 1 de **Mobile Legends: Bang Bang**
 del canal [@monster_agl](https://www.tiktok.com/@monster_agl).
-**Sábado 26 de septiembre de 2026 · 5:00 PM CDMX.**
+**Domingo 27 de septiembre de 2026 · 4:00 PM CDMX** (inscripciones hasta las 3:00 PM).
 
 Un solo proyecto Next.js: la landing, el panel `/admin` y las APIs viven en el
 mismo monolito. PostgreSQL es la única fuente de verdad; Redis es caché y rate
@@ -85,7 +85,7 @@ npm run db:migrate
 
 - `001_init.sql` crea `tournaments`, `participants` y `matches` con sus claves
   foráneas y constraints.
-- `002_seed_tournament.sql` crea el torneo del 26 de septiembre.
+- `002_seed_tournament.sql` crea el torneo del 26 de septiembre; `005_move_to_sunday.sql` lo pasa al domingo 27; `006_unique_mobile_legends_id.sql` impide inscribir dos veces el mismo ID.
 
 Cada migración corre en su propia transacción, queda registrada con su checksum
 en `schema_migrations` (editar una ya aplicada hace fallar el comando) y se toma

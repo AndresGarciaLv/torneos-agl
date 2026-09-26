@@ -11,7 +11,7 @@ export function LiveBanner() {
           <p className="eyebrow">En vivo en TikTok</p>
           <h2 className="mt-3 text-4xl font-extrabold uppercase leading-none sm:text-5xl">Cada encuentro se juega en el live</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">
-            Sábado 26 · 5:00 PM CDMX. Entra al directo de {site.handle} para ver las llaves en vivo, apoyar a tu jugador
+            Domingo 27 · 4:00 PM CDMX. Entra al directo de {site.handle} para ver las llaves en vivo, apoyar a tu jugador
             y no perderte las sorpresas.
           </p>
           <Button asChild size="lg" className="mt-8">

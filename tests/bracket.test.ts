@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   championId,
+  countPlayable,
   currentRound,
   decideMatch,
+  MAX_PARTICIPANTS,
   nextPowerOfTwo,
   planBracket,
+  planByeFill,
+  planUndo,
+  planWithdrawal,
   roundName,
+  runnerUpId,
   spreadByeIndexes,
 } from "@/core/domain/bracket";
 import { DomainError } from "@/core/domain/errors";
@@ -67,7 +73,7 @@ describe("planBracket", () => {
     expect(plan.matches.filter((m) => m.round === 3)).toHaveLength(1);
   });
 
-  it.each([2, 3, 5, 6, 7, 8, 13, 16, 31, 33, 100])("con %i jugadores cada uno aparece exactamente una vez en ronda 1", (n) => {
+  it.each([2, 3, 5, 6, 7, 8, 13, 16])("con %i jugadores cada uno aparece exactamente una vez en ronda 1", (n) => {
     const plan = planBracket(players(n));
     const first = plan.matches.filter((m) => m.round === 1);
     const seen = first.flatMap((m) => [m.player1Id, m.player2Id]).filter((x): x is string => x !== null);
@@ -112,11 +118,16 @@ describe("decideMatch y avance", () => {
     let ms = materialize(players(6));
     let guard = 0;
     while (championId(ms) === null && guard++ < 20) {
+      expect(runnerUpId(ms)).toBeNull();
       const next = ms.find((m) => m.winnerId === null && m.player1Id && m.player2Id)!;
       ms = apply(ms, next.id, next.player1Id!);
     }
     expect(championId(ms)).not.toBeNull();
     expect(currentRound(ms)).toBeNull();
+    // El segundo lugar es quien perdió la final.
+    const final = ms.find((m) => m.nextMatchId === null)!;
+    expect(runnerUpId(ms)).toBe(final.player2Id);
+    expect(runnerUpId(ms)).not.toBe(championId(ms));
   });
 
   it("no deja decidir un encuentro incompleto ni un BYE ni un ganador ajeno", () => {
@@ -189,5 +200,95 @@ describe("fisherYatesShuffle", () => {
 
   it("rechaza una fuente que se sale de rango", () => {
     expect(() => fisherYatesShuffle([1, 2, 3], () => 7)).toThrow(RangeError);
+  });
+});
+
+/** Juega el torneo entero eligiendo ganadores con `pick`. Devuelve el cuadro final y cuántas partidas hubo. */
+function playOut(start: Match[], pick: (m: Match) => string): { matches: Match[]; played: number } {
+  let ms = start;
+  let played = 0;
+  for (;;) {
+    const next = ms.find((m) => m.winnerId === null && m.player1Id !== null && m.player2Id !== null);
+    if (!next) break;
+    ms = apply(ms, next.id, pick(next));
+    played++;
+  }
+  return { matches: ms, played };
+}
+
+describe("de 2 a 16 jugadores el cuadro nunca queda roto", () => {
+  it.each(Array.from({ length: 15 }, (_, i) => i + 2))("%i jugadores", (n) => {
+    const ids = players(n);
+    const ms = materialize(ids);
+
+    // Cada jugador aparece una sola vez en primera ronda y ningún encuentro queda vacío.
+    const first = ms.filter((m) => m.round === 1);
+    const seated = first.flatMap((m) => [m.player1Id, m.player2Id]).filter((x) => x !== null);
+    expect(seated.sort()).toEqual([...ids].sort());
+    expect(first.every((m) => m.player1Id !== null || m.player2Id !== null)).toBe(true);
+
+    // Un eliminatorio de n jugadores tiene exactamente n-1 partidas reales.
+    expect(countPlayable(ms).total).toBe(n - 1);
+
+    for (const side of [1, 2] as const) {
+      const { matches, played } = playOut(ms, (m) => (side === 1 ? m.player1Id! : m.player2Id!));
+      expect(played).toBe(n - 1);
+      expect(championId(matches)).not.toBeNull();
+      expect(currentRound(matches)).toBeNull();
+    }
+  });
+
+  it("17 jugadores no se pueden sortear", () => {
+    expect(MAX_PARTICIPANTS).toBe(16);
+    expect(() => planBracket(players(17))).toThrow(DomainError);
+  });
+});
+
+/** Aplica un alta sobre un BYE como lo hace ManageParticipants. */
+function fillBye(ms: Match[], newId: string): Match[] {
+  const f = planByeFill(ms, () => 0);
+  return ms.map((m) => {
+    if (f.retract && m.id === f.retract.matchId) return f.retract.slot === 1 ? { ...m, player1Id: null } : { ...m, player2Id: null };
+    if (m.id === f.matchId) return f.slot === 1 ? { ...m, player1Id: newId, winnerId: null } : { ...m, player2Id: newId, winnerId: null };
+    return m;
+  });
+}
+
+describe("altas y bajas con el cuadro sorteado", () => {
+  it("de 9 se puede llegar a 16 llenando BYE, y el 17.º no cabe", () => {
+    let ms = materialize(players(9));
+    for (let i = 10; i <= 16; i++) ms = fillBye(ms, `p${i}`);
+    expect(countPlayable(ms).total).toBe(15);
+    expect(ms.filter((m) => m.round === 2).every((m) => m.player1Id === null && m.player2Id === null)).toBe(true);
+    expect(() => planByeFill(ms, () => 0)).toThrowError(/huecos/);
+    expect(playOut(ms, (m) => m.player2Id!).played).toBe(15);
+  });
+
+  it("la baja deja pasar al rival y su hueco lo toma la siguiente alta", () => {
+    let ms = materialize(players(8));
+    const w = planWithdrawal(ms, "p1");
+    ms = ms.map((m) => {
+      if (m.id === w.matchId) {
+        const cleared = w.slot === 1 ? { ...m, player1Id: null } : { ...m, player2Id: null };
+        return { ...cleared, winnerId: w.opponentId };
+      }
+      if (m.id === w.advance.matchId) return w.advance.slot === 1 ? { ...m, player1Id: w.opponentId } : { ...m, player2Id: w.opponentId };
+      return m;
+    });
+    expect(countPlayable(ms).total).toBe(6);
+    ms = fillBye(ms, "nuevo");
+    expect(countPlayable(ms).total).toBe(7);
+    expect(playOut(ms, (m) => m.player1Id!).played).toBe(7);
+  });
+
+  it("no se deshace un resultado si el siguiente ya se jugó", () => {
+    const ms = materialize(players(4));
+    const [a, b] = ms.filter((m) => m.round === 1);
+    let played = apply(ms, a!.id, a!.player1Id!);
+    played = apply(played, b!.id, b!.player1Id!);
+    const final = played.find((m) => m.round === 2)!;
+    played = apply(played, final.id, final.player1Id!);
+    expect(() => planUndo(played, a!.id)).toThrowError(/siguiente/);
+    expect(planUndo(played, final.id)).toEqual({ matchId: final.id, retract: null });
   });
 });

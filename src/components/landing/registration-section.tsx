@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RegistrationForm } from "./registration-form";
 import { SectionHeading } from "./section-heading";
 
-export function RegistrationSection({ status }: { status: TournamentStatus | null }) {
-  const open = status === "registration";
+export function RegistrationSection({ status, open }: { status: TournamentStatus | null; open: boolean }) {
   return (
     <section id="registro" className="scroll-mt-20 px-4 py-20 sm:px-6">
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
@@ -23,7 +22,7 @@ export function RegistrationSection({ status }: { status: TournamentStatus | nul
             </li>
             <li className="flex gap-3">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
-              En el bracket solo aparece tu Gamer Tag. Tu correo queda privado.
+              En el bracket solo aparece tu Gamer Tag. Tu ID queda privado y solo se usa para enviarte el premio.
             </li>
           </ul>
         </div>
@@ -35,6 +34,11 @@ export function RegistrationSection({ status }: { status: TournamentStatus | nul
             <Closed
               title="Inscripciones no disponibles"
               text="No pudimos cargar el torneo en este momento. Recarga la página en unos segundos."
+            />
+          ) : status === "registration" ? (
+            <Closed
+              title="Inscripciones cerradas"
+              text="Se acabó el tiempo para inscribirse. En un momento se sortean las llaves: no te pierdas el torneo en vivo."
             />
           ) : (
             <Closed

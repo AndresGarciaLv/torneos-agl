@@ -26,10 +26,12 @@ export function useAdminAction() {
           body: JSON.stringify(body),
         });
         const data = (await res.json().catch(() => ({}))) as Record<string, unknown> & {
-          error?: { message?: string };
+          error?: { message?: string; fields?: Record<string, string> };
         };
         if (!res.ok) {
-          setError(data.error?.message ?? "La acción falló.");
+          // Con errores por campo se muestran esos: "Revisa los campos marcados" no dice cuál.
+          const fields = Object.values(data.error?.fields ?? {});
+          setError(fields.length > 0 ? fields.join(" ") : (data.error?.message ?? "La acción falló."));
           if (res.status === 401) startTransition(() => router.refresh());
           return false;
         }

@@ -1,7 +1,7 @@
-import { decideMatch } from "../../domain/bracket";
+import { decideMatch, planUndo, statusOf } from "../../domain/bracket";
 import { DomainError } from "../../domain/errors";
 import type { TournamentStatus } from "../../domain/tournament";
-import type { UnitOfWork } from "../../ports/repositories";
+import type { TournamentTransactionContext, UnitOfWork } from "../../ports/repositories";
 import type { Logger } from "../../ports/services";
 import type { TournamentCacheInvalidator } from "../tournament-cache";
 
@@ -34,8 +34,7 @@ export class SelectWinner {
         await ctx.matches.setSlot(decision.advance.matchId, decision.advance.slot, decision.winnerId);
       }
 
-      const status: TournamentStatus = decision.decidesChampion ? "finished" : "live";
-      if (status !== tournament.status) await ctx.tournaments.updateStatus(tournament.id, status);
+      const status = await syncStatus(ctx);
       return { status, championDecided: decision.decidesChampion, corrected: decision.isCorrection };
     });
 
@@ -44,4 +43,28 @@ export class SelectWinner {
     this.logger.info("match.decided", { champion: result.championDecided, corrected: result.corrected });
     return result;
   }
+
+  /** Deja el encuentro sin ganador y saca al que había avanzado. Para un toque equivocado. */
+  async undo(slug: string, matchId: string): Promise<{ status: TournamentStatus }> {
+    const result = await this.uow.withTournament(slug, "exclusive", async (ctx) => {
+      if (ctx.tournament.status === "registration") {
+        throw new DomainError("INVALID_STATE", "Todavía no hay bracket.");
+      }
+      const decision = planUndo(await ctx.matches.list(ctx.tournament.id), matchId);
+      if (decision.retract) await ctx.matches.setSlot(decision.retract.matchId, decision.retract.slot, null);
+      await ctx.matches.setWinner(decision.matchId, null);
+      return { status: await syncStatus(ctx) };
+    });
+
+    await this.invalidator.invalidate(slug, "winner_undone");
+    this.logger.info("match.undone", { status: result.status });
+    return result;
+  }
+}
+
+/** Recalcula el estado desde el cuadro ya escrito, dentro de la misma transacción. */
+async function syncStatus(ctx: TournamentTransactionContext): Promise<TournamentStatus> {
+  const status = statusOf(await ctx.matches.list(ctx.tournament.id));
+  if (status !== ctx.tournament.status) await ctx.tournaments.updateStatus(ctx.tournament.id, status);
+  return status;
 }

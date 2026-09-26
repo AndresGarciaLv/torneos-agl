@@ -42,10 +42,10 @@ describe("RegisterParticipant", () => {
   it("devuelve el error por campo", async () => {
     const useCase = new RegisterParticipant(untouchableDb, memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, noMail);
     const error = await useCase
-      .execute({ slug: "t", input: { gamerTag: "ok", email: "no", acceptedRules: false }, clientIp: null })
+      .execute({ slug: "t", input: { gamerTag: "ok", acceptedRules: false }, clientIp: null })
       .catch((e: unknown) => e);
     expect(isInputValidationError(error)).toBe(true);
-    expect(Object.keys((error as InputValidationError).fields).sort()).toEqual(["acceptedRules", "email"]);
+    expect(Object.keys((error as InputValidationError).fields).sort()).toEqual(["acceptedRules", "mobileLegendsId"]);
   });
 });
 
@@ -69,18 +69,22 @@ describe("reconocer errores sin instanceof", () => {
 });
 
 /** Base en memoria que acepta una inscripción, para probar lo que pasa DESPUÉS del commit. */
-function acceptingDb(): UnitOfWork {
+const CLOSES_AT = new Date("2026-09-26T22:00:00Z"); // 4:00 PM CDMX
+const BEFORE_CLOSE = () => new Date("2026-09-26T21:59:59Z");
+
+function acceptingDb(initialCount = 0): UnitOfWork {
   const tournament = {
     id: "t1", slug: "t", name: "Monster_AGL — Torneo 1 vs 1", status: "registration" as const,
-    startsAt: new Date("2026-09-26T23:00:00Z"), createdAt: new Date(), updatedAt: new Date(),
+    startsAt: new Date("2026-09-26T23:00:00Z"), registrationClosesAt: CLOSES_AT,
+    createdAt: new Date(), updatedAt: new Date(),
   };
-  let count = 0;
+  let count = initialCount;
   return {
     withTournament: async (_slug, _mode, fn) =>
       fn({
         tournament,
         participants: {
-          insert: async (_id: string, p: { gamerTag: string; email: string; mobileLegendsId: string | null }) => {
+          insert: async (_id: string, p: { gamerTag: string; email: string | null; mobileLegendsId: string | null }) => {
             count++;
             return { id: "p" + count, tournamentId: "t1", acceptedRules: true, createdAt: new Date(), ...p };
           },
@@ -90,7 +94,7 @@ function acceptingDb(): UnitOfWork {
   };
 }
 
-const valid = { gamerTag: "Natan<Main>", email: "Jugador@Example.com", mobileLegendsId: "", acceptedRules: true };
+const valid = { gamerTag: "Natan<Main>", mobileLegendsId: "123456789 (2001)", acceptedRules: true };
 
 describe("correos de la inscripción", () => {
   it("avisa con los datos ya normalizados y dice si salió la confirmación", async () => {
@@ -102,12 +106,17 @@ describe("correos de la inscripción", () => {
         return { participantNotified: true, organizerNotified: true };
       },
     };
-    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, notifier);
+    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, notifier, BEFORE_CLOSE);
     const result = await useCase.execute({ slug: "t", input: valid, clientIp: null });
 
     expect(result.confirmationEmailSent).toBe(true);
     expect(seen).toHaveLength(1);
-    expect(seen[0]).toMatchObject({ gamerTag: "Natan<Main>", email: "jugador@example.com", participantNumber: 1 });
+    expect(seen[0]).toMatchObject({
+      gamerTag: "Natan<Main>",
+      email: null,
+      mobileLegendsId: "123456789(2001)",
+      participantNumber: 1,
+    });
   });
 
   it("si el correo revienta, la inscripción queda igual", async () => {
@@ -117,7 +126,7 @@ describe("correos de la inscripción", () => {
         throw new Error("smtp caído");
       },
     };
-    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, broken);
+    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, broken, BEFORE_CLOSE);
     const result = await useCase.execute({ slug: "t", input: valid, clientIp: null });
     expect(result).toMatchObject({ gamerTag: "Natan<Main>", participantCount: 1, confirmationEmailSent: false });
   });
@@ -170,5 +179,34 @@ describe("correos de la inscripción", () => {
 
   it("el aviso al organizador trae el correo del participante", () => {
     expect(organizerEmail(notice(), links).html).toContain("jugador@example.com");
+  });
+
+  it("sin correo del jugador, el aviso al organizador trae su ID y no invita a responder", () => {
+    const mail = organizerEmail(notice({ email: null }), links);
+    expect(mail.html).toContain("123456789(2001)");
+    expect(mail.html).not.toContain("Responder este correo");
+    expect(mail.text).toContain("Correo: —");
+  });
+});
+
+describe("cupo y hora de cierre", () => {
+  const make = (db: UnitOfWork, now: () => Date) =>
+    new RegisterParticipant(db, memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, noMail, now);
+
+  it("el 16.º entra y el 17.º se queda fuera", async () => {
+    await expect(make(acceptingDb(15), BEFORE_CLOSE).execute({ slug: "t", input: valid, clientIp: null })).resolves.toMatchObject({
+      participantCount: 16,
+    });
+    const error = await make(acceptingDb(16), BEFORE_CLOSE)
+      .execute({ slug: "t", input: valid, clientIp: null })
+      .catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: "TOURNAMENT_FULL" });
+  });
+
+  it("a las 4:00 PM en punto ya no se acepta a nadie", async () => {
+    const error = await make(acceptingDb(3), () => CLOSES_AT)
+      .execute({ slug: "t", input: valid, clientIp: null })
+      .catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: "REGISTRATION_CLOSED", message: "Las inscripciones cerraron a las 4:00 p.m. (CDMX)." });
   });
 });

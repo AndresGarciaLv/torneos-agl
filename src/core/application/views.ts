@@ -2,7 +2,7 @@
  * Vistas que salen del núcleo. La pública es la que se cachea en Redis y se
  * sirve en /api/tournament: por construcción no tiene ningún campo de correo.
  */
-import { championId, countPlayable, currentRound, roundCountOf, roundName } from "../domain/bracket";
+import { championId, countPlayable, runnerUpId, currentRound, MAX_PARTICIPANTS, roundCountOf, roundName } from "../domain/bracket";
 import { isBye, type Match } from "../domain/match";
 import type { Participant, PublicPlayer } from "../domain/participant";
 import type { Tournament, TournamentStatus } from "../domain/tournament";
@@ -28,8 +28,14 @@ export interface PublicTournamentView {
   readonly slug: string;
   readonly name: string;
   readonly startsAt: string;
+  /** Hasta cuándo acepta inscripciones el formulario. La cuenta regresiva la hace el navegador. */
+  readonly registrationClosesAt: string;
   readonly status: TournamentStatus;
   readonly participantCount: number;
+  /** Lugares del torneo. */
+  readonly capacity: number;
+  /** Inscritos en orden de llegada: llenan los lugares antes del sorteo. Solo el Gamer Tag. */
+  readonly players: readonly PublicPlayer[];
   readonly rounds: readonly RoundView[];
   readonly currentRound: number | null;
   readonly champion: PublicPlayer | null;
@@ -39,9 +45,11 @@ export interface PublicTournamentView {
 export interface AdminParticipantView {
   readonly id: string;
   readonly gamerTag: string;
-  readonly email: string;
+  readonly email: string | null;
   readonly mobileLegendsId: string | null;
   readonly createdAt: string;
+  /** 1 = campeón, 2 = subcampeón; null para el resto o mientras no se juegue la final. */
+  readonly place: 1 | 2 | null;
 }
 
 export interface AdminDashboardView {
@@ -92,8 +100,11 @@ export function buildPublicView(
     slug: tournament.slug,
     name: tournament.name,
     startsAt: tournament.startsAt.toISOString(),
+    registrationClosesAt: tournament.registrationClosesAt.toISOString(),
     status: tournament.status,
     participantCount,
+    capacity: MAX_PARTICIPANTS,
+    players: players.map((p) => ({ id: p.id, gamerTag: p.gamerTag })),
     rounds: buildRounds(matches, players),
     currentRound: currentRound(matches),
     champion: champ ? { id: champ.id, gamerTag: champ.gamerTag } : null,
@@ -109,6 +120,8 @@ export function buildAdminDashboard(
 ): AdminDashboardView {
   const players = participants.map((p) => ({ id: p.id, gamerTag: p.gamerTag }));
   const { decided, total } = countPlayable(matches);
+  const first = championId(matches);
+  const second = runnerUpId(matches);
   return {
     tournament: buildPublicView(tournament, participants.length, matches, players, now),
     participants: participants.map((p) => ({
@@ -117,6 +130,7 @@ export function buildAdminDashboard(
       email: p.email,
       mobileLegendsId: p.mobileLegendsId,
       createdAt: p.createdAt.toISOString(),
+      place: p.id === first ? 1 : p.id === second ? 2 : null,
     })),
     matchesDecided: decided,
     matchesTotal: total,

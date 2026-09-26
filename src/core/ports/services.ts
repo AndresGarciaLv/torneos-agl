@@ -58,12 +58,13 @@ export interface Logger {
   error(event: string, fields?: Record<string, string | number | boolean | null>): void;
 }
 
-/** Lo que hace falta para avisar de una inscripción. Lleva el correo: nunca va a un log. */
+/** Lo que hace falta para avisar de una inscripción. Si lleva correo, nunca va a un log. */
 export interface RegistrationNotice {
   readonly tournamentName: string;
   readonly startsAt: Date;
   readonly gamerTag: string;
-  readonly email: string;
+  /** null cuando el jugador no dejó correo: entonces solo sale el aviso al organizador. */
+  readonly email: string | null;
   readonly mobileLegendsId: string | null;
   readonly participantNumber: number;
 }

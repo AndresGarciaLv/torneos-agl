@@ -1,6 +1,7 @@
+import { MAX_PARTICIPANTS } from "../../domain/bracket";
 import { DomainError } from "../../domain/errors";
 import { createNewParticipant } from "../../domain/participant";
-import { isRegistrationOpen } from "../../domain/tournament";
+import { registrationGate } from "../../domain/tournament";
 import type { UnitOfWork } from "../../ports/repositories";
 import type { HumanVerifier, Logger, RateLimiter, RegistrationNotifier } from "../../ports/services";
 import { InputValidationError, RateLimitedError } from "../errors";
@@ -31,6 +32,7 @@ export class RegisterParticipant {
     private readonly invalidator: TournamentCacheInvalidator,
     private readonly logger: Logger,
     private readonly notifier: RegistrationNotifier,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   async execute(cmd: RegisterParticipantCommand): Promise<RegisterParticipantResult> {
@@ -63,9 +65,27 @@ export class RegisterParticipant {
 
     const candidate = createNewParticipant(data);
 
-    const result = await this.uow.withTournament(cmd.slug, "shared", async (ctx) => {
-      if (!isRegistrationOpen(ctx.tournament)) {
+    // Exclusivo: con cupo fijo, dos inscripciones simultáneas no pueden contar 15 las dos y quedar en 17.
+    const result = await this.uow.withTournament(cmd.slug, "exclusive", async (ctx) => {
+      const gate = registrationGate(
+        ctx.tournament,
+        await ctx.participants.count(ctx.tournament.id),
+        MAX_PARTICIPANTS,
+        this.now(),
+      );
+      if (gate === "drawn") {
         throw new DomainError("REGISTRATION_CLOSED", "Las inscripciones ya cerraron: las llaves están sorteadas.");
+      }
+      if (gate === "time_over") {
+        const closedAt = new Intl.DateTimeFormat("es-MX", {
+          timeZone: "America/Mexico_City",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(ctx.tournament.registrationClosesAt);
+        throw new DomainError("REGISTRATION_CLOSED", `Las inscripciones cerraron a las ${closedAt} (CDMX).`);
+      }
+      if (gate === "full") {
+        throw new DomainError("TOURNAMENT_FULL", `Se llenaron los ${MAX_PARTICIPANTS} lugares del torneo.`);
       }
       const participant = await ctx.participants.insert(ctx.tournament.id, candidate);
       const participantCount = await ctx.participants.count(ctx.tournament.id);

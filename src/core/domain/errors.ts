@@ -8,12 +8,15 @@ export type DomainErrorCode =
   | "REGISTRATION_CLOSED"
   | "DUPLICATE_EMAIL"
   | "DUPLICATE_GAMER_TAG"
+  | "DUPLICATE_ML_ID"
   | "NOT_ENOUGH_PARTICIPANTS"
   | "INVALID_STATE"
   | "CONFIRMATION_REQUIRED"
   | "MATCH_NOT_READY"
   | "INVALID_WINNER"
-  | "DOWNSTREAM_DECIDED";
+  | "DOWNSTREAM_DECIDED"
+  | "BRACKET_FULL"
+  | "TOURNAMENT_FULL";
 
 export class DomainError extends Error {
   constructor(

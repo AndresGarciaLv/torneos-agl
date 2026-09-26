@@ -4,11 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { TournamentStatus } from "@/core/domain/tournament";
 import { site } from "@/lib/site";
+import { Countdown } from "./countdown";
 import { TikTokIcon } from "./tiktok-icon";
 
 interface HeroProps {
   status: TournamentStatus | null;
   participantCount: number | null;
+  /** null si la base no respondió: sin fecha fiable no hay contador. */
+  schedule: { startsAt: string; registrationClosesAt: string } | null;
+  registrationOpen: boolean;
 }
 
 const STATUS_BADGE: Record<TournamentStatus, string> = {
@@ -18,8 +22,7 @@ const STATUS_BADGE: Record<TournamentStatus, string> = {
   finished: "Tenemos campeón",
 };
 
-export function Hero({ status, participantCount }: HeroProps) {
-  const registrationOpen = status === null || status === "registration";
+export function Hero({ status, participantCount, schedule, registrationOpen }: HeroProps) {
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="bg-arena-grid pointer-events-none absolute inset-0" />
@@ -62,6 +65,12 @@ export function Hero({ status, participantCount }: HeroProps) {
               <dd className="font-display text-base font-semibold uppercase tracking-wider">{site.timeLabel}</dd>
             </div>
           </dl>
+
+          {schedule && (status === null || status === "registration" || status === "bracket_ready") && (
+            <div className="mt-7 motion-safe:animate-rise [animation-delay:250ms]">
+              <Countdown startsAt={schedule.startsAt} registrationClosesAt={schedule.registrationClosesAt} />
+            </div>
+          )}
 
           <div className="mt-8 flex w-full flex-col gap-3 motion-safe:animate-rise [animation-delay:280ms] sm:w-auto sm:flex-row">
             {registrationOpen ? (

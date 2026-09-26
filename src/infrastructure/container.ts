@@ -6,6 +6,7 @@ import { AdminLogin } from "@/core/application/use-cases/admin-login";
 import { GetAdminDashboard } from "@/core/application/use-cases/get-admin-dashboard";
 import { GetPublicTournament } from "@/core/application/use-cases/get-public-tournament";
 import { ManageBracket } from "@/core/application/use-cases/manage-bracket";
+import { ManageParticipants } from "@/core/application/use-cases/manage-participants";
 import { RegisterParticipant } from "@/core/application/use-cases/register-participant";
 import { SelectWinner } from "@/core/application/use-cases/select-winner";
 import type { Logger, RegistrationNotifier, SessionService } from "@/core/ports/services";
@@ -38,6 +39,7 @@ function build() {
   const invalidator = new TournamentCacheInvalidator(cache, logger);
   const rateLimiter = new RedisRateLimiter(redis, env.ADMIN_SESSION_SECRET, logger);
   const sessions: SessionService = new HmacSessionService(env.ADMIN_SESSION_SECRET);
+  const random = new CryptoRandomSource();
 
   return {
     env,
@@ -53,7 +55,8 @@ function build() {
     ),
     getPublicTournament: new GetPublicTournament(repos, cache),
     getAdminDashboard: new GetAdminDashboard(repos),
-    manageBracket: new ManageBracket(uow, new CryptoRandomSource(), invalidator, logger),
+    manageBracket: new ManageBracket(uow, random, invalidator, logger),
+    manageParticipants: new ManageParticipants(uow, random, invalidator, logger),
     selectWinner: new SelectWinner(uow, invalidator, logger),
     adminLogin: new AdminLogin(new EnvPasswordVerifier(env.ADMIN_PASSWORD), sessions, rateLimiter, logger),
   };

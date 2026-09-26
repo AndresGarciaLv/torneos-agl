@@ -1,9 +1,9 @@
 import { SectionHeading } from "./section-heading";
 
 const STEPS = [
-  { n: "01", title: "Inscríbete", text: "Deja tu Gamer Tag y tu correo. El correo nunca se publica." },
+  { n: "01", title: "Inscríbete", text: "Deja tu Gamer Tag y tu ID de Mobile Legends. Tu ID nunca se publica." },
   { n: "02", title: "Sorteo aleatorio", text: "Las llaves se sortean en el servidor, sin favoritos. Si faltan rivales, hay BYE." },
-  { n: "03", title: "Eliminación directa", text: "Cada encuentro es 1 vs 1. Quien gana avanza; quien pierde queda fuera." },
+  { n: "03", title: "Eliminación directa", text: "Cada encuentro es 1 vs 1 a una sola partida. Quien gana avanza; quien pierde queda fuera." },
   { n: "04", title: "Final en el live", text: "El bracket se actualiza en vivo aquí mismo mientras se juega en TikTok." },
 ] as const;
 
