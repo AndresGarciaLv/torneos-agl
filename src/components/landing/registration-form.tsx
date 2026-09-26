@@ -11,6 +11,7 @@ import { fieldErrors, registrationSchema } from "@/core/application/schemas";
 import { formatMobileLegendsId, ML_SERVER_ID, ML_USER_ID } from "@/core/domain/participant";
 import { site } from "@/lib/site";
 import { MlbbIdFields, type MlbbIdValue } from "./mlbb-id-fields";
+import { ClanInvite } from "./rules";
 import { TikTokIcon } from "./tiktok-icon";
 
 type Errors = Partial<
@@ -101,6 +102,7 @@ export function RegistrationForm() {
           Si ganas, el premio va a tu ID <span className="text-foreground">{done.mobileLegendsId}</span>. Toma captura de
           esta pantalla como comprobante.
         </p>
+        <ClanInvite className="max-w-sm" />
         <Button asChild variant="outline">
           <a href={site.tiktokUrl} target="_blank" rel="noopener noreferrer">
             <TikTokIcon /> Sigue a {site.handle}
