@@ -89,10 +89,10 @@ export function createNewParticipant(input: {
   const mobileLegendsId = requireMobileLegendsId(input.mobileLegendsId);
 
   if ([...gamerTag].length < GAMER_TAG_MIN || [...gamerTag].length > GAMER_TAG_MAX) {
-    throw new DomainError("VALIDATION", `El Gamer Tag debe tener entre ${GAMER_TAG_MIN} y ${GAMER_TAG_MAX} caracteres.`);
+    throw new DomainError("VALIDATION", `El nickname debe tener entre ${GAMER_TAG_MIN} y ${GAMER_TAG_MAX} caracteres.`);
   }
   if (!input.acceptedRules) {
-    throw new DomainError("VALIDATION", "Debes aceptar que tu Gamer Tag aparezca en el bracket.");
+    throw new DomainError("VALIDATION", "Debes aceptar que tu nickname aparezca en el bracket.");
   }
   return { gamerTag, email: null, mobileLegendsId, acceptedRules: true };
 }
@@ -112,7 +112,7 @@ export function createAdminParticipant(input: {
   const mobileLegendsId = requireMobileLegendsId(input.mobileLegendsId);
 
   if ([...gamerTag].length < GAMER_TAG_MIN || [...gamerTag].length > GAMER_TAG_MAX) {
-    throw new DomainError("VALIDATION", `El Gamer Tag debe tener entre ${GAMER_TAG_MIN} y ${GAMER_TAG_MAX} caracteres.`);
+    throw new DomainError("VALIDATION", `El nickname debe tener entre ${GAMER_TAG_MIN} y ${GAMER_TAG_MAX} caracteres.`);
   }
   if (email !== null && (email.length > EMAIL_MAX || !email.includes("@"))) {
     throw new DomainError("VALIDATION", "El correo no es válido.");

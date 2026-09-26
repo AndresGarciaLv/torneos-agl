@@ -8,7 +8,7 @@ export function SiteFooter() {
           © 2026 {site.channel}. Torneo comunitario de {site.game}.
         </p>
         <p className="max-w-md sm:text-right">
-          Tu ID de Mobile Legends solo se usa para enviarte el premio y nunca se publica. En el bracket aparece únicamente tu Gamer Tag.
+          Tu ID de Mobile Legends solo se usa para enviarte el premio y nunca se publica. En el bracket aparece únicamente tu nickname.
         </p>
       </div>
     </footer>

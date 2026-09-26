@@ -202,11 +202,11 @@ export function participantEmail(n: RegistrationNotice, links: EmailLinks): Rend
       headline(`¡<span style="color:${C.brand};">${tag}</span>, estás inscrito!`) +
       para(
         `Tu lugar en el <strong style="color:${C.text};">${escapeHtml(n.tournamentName)}</strong> ya está guardado. ` +
-          `Guarda este correo: es tu comprobante de inscripción. Antes del torneo se hace el sorteo aleatorio y tu Gamer Tag aparecerá en el bracket.`,
+          `Guarda este correo: es tu comprobante de inscripción. Antes del torneo se hace el sorteo aleatorio y tu nickname aparecerá en el bracket.`,
       ) +
       sectionTitle("Tu pase de jugador") +
       card(
-        row("Gamer Tag", tag, C.brand) +
+        row("Nickname", tag, C.brand) +
           row("ID de MLBB", mlId) +
           (n.email ? row("Correo", escapeHtml(n.email)) : "") +
           row("Inscripción", `#${n.participantNumber}`) +
@@ -235,10 +235,10 @@ export function participantEmail(n: RegistrationNotice, links: EmailLinks): Rend
     `¡${n.gamerTag}, estás inscrito!`,
     "",
     `Tu lugar en el ${n.tournamentName} ya está guardado. Guarda este correo: es tu comprobante de inscripción.`,
-    "Antes del torneo se hace el sorteo aleatorio y tu Gamer Tag aparecerá en el bracket.",
+    "Antes del torneo se hace el sorteo aleatorio y tu nickname aparecerá en el bracket.",
     "",
     "TU PASE DE JUGADOR",
-    `Gamer Tag: ${n.gamerTag}`,
+    `Nickname: ${n.gamerTag}`,
     `ID de MLBB: ${n.mobileLegendsId ?? "No lo indicaste"}`,
     ...(n.email ? [`Correo: ${n.email}`] : []),
     `Inscripción: #${n.participantNumber}`,
@@ -282,7 +282,7 @@ export function organizerEmail(n: RegistrationNotice, links: EmailLinks): Render
           (n.email ? " Responder este correo le escribe directo." : ""),
       ) +
       card(
-        row("Gamer Tag", escapeHtml(n.gamerTag), C.brand) +
+        row("Nickname", escapeHtml(n.gamerTag), C.brand) +
           row("Correo", n.email ? escapeHtml(n.email) : "—") +
           row("ID de MLBB", n.mobileLegendsId ? escapeHtml(n.mobileLegendsId) : "—") +
           row("Inscritos", String(n.participantNumber)) +
@@ -295,7 +295,7 @@ export function organizerEmail(n: RegistrationNotice, links: EmailLinks): Render
   const text = [
     `Nueva inscripción #${n.participantNumber} en el ${n.tournamentName}`,
     "",
-    `Gamer Tag: ${n.gamerTag}`,
+    `Nickname: ${n.gamerTag}`,
     `Correo: ${n.email ?? "—"}`,
     `ID de MLBB: ${n.mobileLegendsId ?? "—"}`,
     `Inscritos: ${n.participantNumber}`,

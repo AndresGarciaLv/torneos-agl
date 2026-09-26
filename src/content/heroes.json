@@ -34,7 +34,7 @@
   {
     "slug": "lukas",
     "name": "Lukas",
-    "role": "Luchador",
+    "role": "Combatiente",
     "src": "/heroes/lukas.webp",
     "width": 240,
     "height": 390
@@ -66,7 +66,7 @@
   {
     "slug": "chou",
     "name": "Chou",
-    "role": "Luchador",
+    "role": "Combatiente",
     "src": "/heroes/chou.webp",
     "width": 240,
     "height": 390

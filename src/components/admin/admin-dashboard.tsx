@@ -82,7 +82,7 @@ export function AdminDashboard({ dashboard }: { dashboard: AdminDashboardView })
               <thead className="border-b border-white/[0.07] text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-semibold">#</th>
-                  <th className="px-4 py-3 font-semibold">Gamer Tag</th>
+                  <th className="px-4 py-3 font-semibold">Nickname</th>
                   <th className="px-4 py-3 font-semibold">User ID</th>
                   <th className="px-4 py-3 font-semibold">Server ID</th>
                   <th className="px-4 py-3 font-semibold">Inscrito</th>

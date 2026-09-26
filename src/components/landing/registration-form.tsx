@@ -114,20 +114,23 @@ export function RegistrationForm() {
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor={ids.tag}>
-          Gamer Tag <span className="text-brand">*</span>
+          Nickname del juego <span className="text-brand">*</span>
         </Label>
         <Input
           id={ids.tag}
           name="gamerTag"
           autoComplete="nickname"
           maxLength={40}
-          placeholder="Como te conocen en la arena"
+          placeholder="Tal como aparece en Mobile Legends"
           value={values.gamerTag}
           onChange={set("gamerTag")}
           aria-invalid={Boolean(errors.gamerTag)}
-          aria-describedby={errors.gamerTag ? `${ids.tag}-err` : undefined}
+          aria-describedby={`${ids.tag}-hint${errors.gamerTag ? ` ${ids.tag}-err` : ""}`}
           required
         />
+        <p id={`${ids.tag}-hint`} className="text-xs text-muted-foreground">
+          Escríbelo igual que en tu perfil del juego: con él te identificamos al entrar a la sala.
+        </p>
         <FieldError id={`${ids.tag}-err`} message={errors.gamerTag} />
       </div>
 
@@ -163,7 +166,7 @@ export function RegistrationForm() {
             <a href="#reglas" className="text-brand-300 underline underline-offset-2 hover:text-brand">
               reglas del torneo
             </a>{" "}
-            y que mi Gamer Tag aparezca públicamente en el bracket.
+            y que mi nickname aparezca públicamente en el bracket.
           </label>
         </div>
         <FieldError id={`${ids.rules}-err`} message={errors.acceptedRules} />

@@ -85,7 +85,7 @@ function duplicateError(error: unknown): unknown {
       return new DomainError("DUPLICATE_EMAIL", "Ese correo ya está inscrito en este torneo.");
     }
     if (pgError.constraint === "participants_tournament_gamer_tag_key") {
-      return new DomainError("DUPLICATE_GAMER_TAG", "Ese Gamer Tag ya está tomado en este torneo.");
+      return new DomainError("DUPLICATE_GAMER_TAG", "Ese nickname ya está tomado en este torneo.");
     }
     if (pgError.constraint === "participants_tournament_ml_id_key") {
       return new DomainError("DUPLICATE_ML_ID", "Ese ID de Mobile Legends ya está inscrito en este torneo.");

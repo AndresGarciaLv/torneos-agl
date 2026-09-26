@@ -130,6 +130,21 @@
     @apply bg-background text-foreground font-sans antialiased;
     min-height: 100dvh;
   }
+  /* Tailwind 4 ya no pone la manita en los botones: todo lo que se puede tocar la lleva. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not(:disabled),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :disabled {
+    cursor: not-allowed;
+  }
   h1, h2, h3 {
     @apply font-display;
     text-wrap: balance;

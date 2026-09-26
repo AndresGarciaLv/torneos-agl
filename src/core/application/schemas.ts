@@ -6,7 +6,7 @@ import { z } from "zod";
 import { EMAIL_MAX, GAMER_TAG_MAX, GAMER_TAG_MIN, ML_FULL_ID, ML_ID_MAX, normalizeGamerTag } from "../domain/participant";
 
 const gamerTag = z
-  .string({ error: "Escribe tu Gamer Tag." })
+  .string({ error: "Escribe tu nickname." })
   .transform(normalizeGamerTag)
   .refine((v) => [...v].length >= GAMER_TAG_MIN, `Mínimo ${GAMER_TAG_MIN} caracteres.`)
   .refine((v) => [...v].length <= GAMER_TAG_MAX, `Máximo ${GAMER_TAG_MAX} caracteres.`);

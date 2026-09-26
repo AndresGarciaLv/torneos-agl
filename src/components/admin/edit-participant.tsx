@@ -84,7 +84,7 @@ export function EditParticipant({ participant }: { participant: AdminParticipant
           </AlertDialogHeader>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor={ids.tag}>Gamer Tag</Label>
+            <Label htmlFor={ids.tag}>Nickname</Label>
             <Input id={ids.tag} maxLength={40} value={values.gamerTag} onChange={set("gamerTag")} required />
           </div>
           <div className="grid grid-cols-[1fr_auto] gap-3">

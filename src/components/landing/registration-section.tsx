@@ -22,7 +22,7 @@ export function RegistrationSection({ status, open }: { status: TournamentStatus
             </li>
             <li className="flex gap-3">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
-              En el bracket solo aparece tu Gamer Tag. Tu ID queda privado y solo se usa para enviarte el premio.
+              En el bracket solo aparece tu nickname. Tu ID queda privado y solo se usa para enviarte el premio.
             </li>
           </ul>
         </div>

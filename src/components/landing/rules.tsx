@@ -1,4 +1,4 @@
-import { Ban, Clock, Flag, Gamepad2, ShieldAlert, Swords, Timer, Trophy, Wifi } from "lucide-react";
+import { Ban, Clock, DoorOpen, Flag, Gamepad2, ShieldAlert, Swords, Timer, Trophy, Wifi } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 
 interface RuleBlock {
@@ -18,10 +18,25 @@ const BLOCKS: readonly RuleBlock[] = [
         Eliminación directa a <B>una sola partida</B> por encuentro. Quien pierde queda fuera: <B>no hay revancha ni segundas oportunidades</B>.
       </>,
       <>
-        Se juega en <B>Personalizada → Clásica</B>, en el mapa normal. La sala la crea Monster_AGL en el live y entra como espectador.
+        Entras con la <B>cuenta del ID que registraste</B>. Si juegas con otra cuenta o alguien juega por ti, quedas descalificado.
+      </>,
+    ],
+  },
+  {
+    icon: <DoorOpen aria-hidden />,
+    title: "Sala personalizada",
+    rules: [
+      <>
+        Cada duelo se juega en una <B>sala personalizada</B> de Mobile Legends (modo <B>Personalizado</B>) configurada <B>1 vs 1</B> en
+        el mapa clásico. No cuenta para tu rango ni te quita estrellas.
       </>,
       <>
-        Entras con la <B>cuenta del ID que registraste</B>. Si juegas con otra cuenta o alguien juega por ti, quedas descalificado.
+        Monster_AGL crea la sala en el live de TikTok y <B>pasa el ID de la sala</B> cuando te toque: entra con ese ID. Monster_AGL se queda
+        como espectador para ver todo el duelo.
+      </>,
+      <>
+        En el juego usa el <B>mismo nickname que registraste</B>: así te identificamos en la sala. Si tu nickname no coincide, no te
+        dejamos entrar hasta confirmar que eres tú.
       </>,
     ],
   },
@@ -99,7 +114,7 @@ const BLOCKS: readonly RuleBlock[] = [
     title: "Puntualidad",
     rules: [
       <>
-        Cuando te llamen en el live tienes <B>5 minutos</B> para entrar a la sala. Si no llegas, pierdes por W.O. y tu rival avanza.
+        Cuando te llamen en el live tienes <B>5 minutos</B> para entrar a la sala con el ID que se pasó. Si no llegas, pierdes por W.O. y tu rival avanza.
       </>,
       <>Mantente conectado al live de TikTok: ahí se anuncia cada encuentro.</>,
     ],
