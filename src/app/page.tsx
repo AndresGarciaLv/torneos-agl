@@ -34,7 +34,10 @@ function acceptsRegistrations(view: PublicTournamentView | null): boolean {
 export default async function HomePage() {
   const view = await loadTournament();
   const liveUpdates = view?.status === "bracket_ready" || view?.status === "live";
-  const registrationOpen = acceptsRegistrations(view);
+  const spots = view ? { taken: view.participantCount, capacity: view.capacity } : null;
+  const full = spots !== null && spots.taken >= spots.capacity;
+  // Con los 16 lugares ocupados el formulario se cierra aunque siga corriendo el plazo.
+  const registrationOpen = acceptsRegistrations(view) && !full;
   return (
     <>
       <SiteHeader />
@@ -44,12 +47,13 @@ export default async function HomePage() {
           participantCount={view?.participantCount ?? null}
           schedule={view ? { startsAt: view.startsAt, registrationClosesAt: view.registrationClosesAt } : null}
           registrationOpen={registrationOpen}
+          spots={view?.status === "registration" ? spots : null}
         />
         <Prizes />
         <HeroRoster />
         <HowItWorks />
         <Rules />
-        <RegistrationSection status={view?.status ?? null} open={registrationOpen} />
+        <RegistrationSection status={view?.status ?? null} open={registrationOpen} spots={spots} />
         <BracketSection view={view} />
         <LiveBanner />
       </main>

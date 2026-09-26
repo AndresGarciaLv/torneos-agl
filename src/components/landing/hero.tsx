@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { TournamentStatus } from "@/core/domain/tournament";
 import { site } from "@/lib/site";
 import { Countdown } from "./countdown";
+import { SpotsCounter } from "./spots-counter";
 import { TikTokIcon } from "./tiktok-icon";
 
 interface HeroProps {
@@ -13,6 +14,8 @@ interface HeroProps {
   /** null si la base no respondió: sin fecha fiable no hay contador. */
   schedule: { startsAt: string; registrationClosesAt: string } | null;
   registrationOpen: boolean;
+  /** Solo durante inscripciones: cuántos lugares quedan. */
+  spots: { taken: number; capacity: number } | null;
 }
 
 const STATUS_BADGE: Record<TournamentStatus, string> = {
@@ -22,7 +25,8 @@ const STATUS_BADGE: Record<TournamentStatus, string> = {
   finished: "Tenemos campeón",
 };
 
-export function Hero({ status, participantCount, schedule, registrationOpen }: HeroProps) {
+export function Hero({ status, participantCount, schedule, registrationOpen, spots }: HeroProps) {
+  const full = spots !== null && spots.taken >= spots.capacity;
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="bg-arena-grid pointer-events-none absolute inset-0" />
@@ -34,7 +38,7 @@ export function Hero({ status, participantCount, schedule, registrationOpen }: H
       <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:pb-24 lg:pt-16">
         <div className="order-2 flex flex-col items-center text-center lg:order-1 lg:items-start lg:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 motion-safe:animate-rise lg:justify-start">
-            {status && <Badge>{STATUS_BADGE[status]}</Badge>}
+            {status && <Badge>{full ? "Lugares agotados" : STATUS_BADGE[status]}</Badge>}
             <Badge variant="outline">
               <Swords aria-hidden /> {site.game}
             </Badge>
@@ -72,6 +76,8 @@ export function Hero({ status, participantCount, schedule, registrationOpen }: H
             </div>
           )}
 
+          {spots && <SpotsCounter {...spots} className="mt-7 motion-safe:animate-rise [animation-delay:265ms]" />}
+
           <div className="mt-8 flex w-full flex-col gap-3 motion-safe:animate-rise [animation-delay:280ms] sm:w-auto sm:flex-row">
             {registrationOpen ? (
               <Button asChild size="lg">
@@ -92,7 +98,7 @@ export function Hero({ status, participantCount, schedule, registrationOpen }: H
             <TikTokIcon className="size-4" /> Ver live en TikTok · {site.handle}
           </a>
 
-          {participantCount !== null && participantCount > 0 && (
+          {!spots && participantCount !== null && participantCount > 0 && (
             <p className="mt-6 text-xs uppercase tracking-[0.2em] text-muted-foreground">
               <span className="font-display text-base font-bold text-foreground">{participantCount}</span>{" "}
               {participantCount === 1 ? "jugador inscrito" : "jugadores inscritos"}
