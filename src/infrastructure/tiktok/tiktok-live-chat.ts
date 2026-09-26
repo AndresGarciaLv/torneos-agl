@@ -1,6 +1,7 @@
 import "server-only";
 import { ControlEvent, TikTokLiveConnection, UserOfflineError, WebcastEvent } from "tiktok-live-connector";
-import type { LiveChatSource } from "@/core/ports/services";
+import { giftStreakKey } from "@/core/domain/donors";
+import type { LiveChatHandlers, LiveChatSource } from "@/core/ports/services";
 
 export class LiveOfflineError extends Error {
   constructor() {
@@ -21,10 +22,7 @@ export class TikTokLiveChat implements LiveChatSource {
     private readonly signApiKey: string | undefined,
   ) {}
 
-  async listen(
-    handlers: Parameters<LiveChatSource["listen"]>[0],
-    signal: AbortSignal,
-  ): Promise<void> {
+  async listen(handlers: LiveChatHandlers, signal: AbortSignal): Promise<void> {
     if (signal.aborted) return;
     const connection = new TikTokLiveConnection(this.username, {
       signApiKey: this.signApiKey,
@@ -36,12 +34,32 @@ export class TikTokLiveChat implements LiveChatSource {
     // En los mensajes v3 el @usuario viene en `displayId` y el texto en `content`.
     connection.on(WebcastEvent.CHAT, (data) => {
       const user = data.user?.displayId;
-      if (!user || !data.content) return;
+      if (!user || !data.content || !handlers.onComment) return;
       handlers.onComment({ user, nickname: data.user?.nickname || user, comment: data.content });
     });
     connection.on(WebcastEvent.ROOM_USER, (data) => {
       const viewers = Number(data.total);
-      if (Number.isFinite(viewers)) handlers.onViewers(viewers);
+      if (Number.isFinite(viewers)) handlers.onViewers?.(viewers);
+    });
+    connection.on(WebcastEvent.GIFT, (data) => {
+      const user = data.user?.displayId;
+      if (!user || !handlers.onGift) return;
+      handlers.onGift({
+        streakKey: giftStreakKey({
+          userId: data.user?.id || user,
+          giftId: String(data.giftId),
+          groupId: String(data.groupId ?? ""),
+          // type 1 = regalo combinable: llega un evento por cada toque de la racha.
+          combo: data.gift?.type === 1 || Boolean(data.gift?.combo),
+          msgId: data.common?.msgId ?? "",
+        }),
+        user,
+        nickname: data.user?.nickname || user,
+        avatarUrl: data.user?.avatarThumb?.urlList?.[0] ?? null,
+        giftName: data.gift?.name ?? "Regalo",
+        coinsEach: data.gift?.diamondCount ?? 0,
+        repeatCount: data.repeatCount || 1,
+      });
     });
 
     const stop = () => void connection.disconnect().catch(() => undefined);

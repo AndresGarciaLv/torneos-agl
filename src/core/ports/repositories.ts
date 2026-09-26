@@ -1,6 +1,7 @@
 import type { BracketPlan } from "../domain/bracket";
 import type { Match, Slot } from "../domain/match";
 import type { NewParticipant, Participant, ParticipantChanges, PublicPlayer } from "../domain/participant";
+import type { Donor, LiveGift } from "../domain/donors";
 import type { Raffle, RaffleEntry } from "../domain/raffle";
 import type { Tournament, TournamentStatus } from "../domain/tournament";
 
@@ -79,4 +80,15 @@ export interface RaffleRepository {
   winners(raffleId: string): Promise<RaffleEntry[]>;
   /** false si esa persona ya había ganado en esta ruleta (otro giro simultáneo). */
   addWinner(raffleId: string, entry: RaffleEntry): Promise<boolean>;
+}
+
+export interface DonorRepository {
+  /** Guarda un regalo; en una racha repetida conserva la cuenta más alta. */
+  record(gift: LiveGift): Promise<void>;
+  /** Los que más monedas han donado desde el último reinicio. */
+  top(limit: number): Promise<Donor[]>;
+  reset(): Promise<void>;
+  /** Solo una conexión al live a la vez: true si esta la consiguió por `seconds`. */
+  acquireCollector(seconds: number): Promise<boolean>;
+  releaseCollector(): Promise<void>;
 }

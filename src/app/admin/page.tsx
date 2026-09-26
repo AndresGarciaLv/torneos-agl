@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { DonorsCard } from "@/components/admin/donors-card";
 import { LoginForm } from "@/components/admin/login-form";
 import { LogoutButton } from "@/components/admin/logout-button";
 import { LiveSync } from "@/components/live-sync";
-import { tournamentSlug } from "@/infrastructure/config/env";
+import { serverEnv, tournamentSlug } from "@/infrastructure/config/env";
 import { container } from "@/infrastructure/container";
 import { isAdmin } from "@/lib/admin-session";
+import { overlayKey } from "@/lib/overlay-key";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +48,11 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
+        {authed && (
+          <div className="mb-8">
+            <DonorsCard overlayUrl={`${serverEnv().NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/overlay/donadores?key=${overlayKey()}`} />
+          </div>
+        )}
         {authed ? <AdminDashboard dashboard={await container().getAdminDashboard.execute(tournamentSlug())} /> : <LoginForm />}
         {authed && <LiveSync />}
       </main>

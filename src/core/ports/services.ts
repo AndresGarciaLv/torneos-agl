@@ -1,3 +1,4 @@
+import type { LiveGift } from "../domain/donors";
 /**
  * Caché de lectura. NUNCA es fuente de verdad: si falla, quien la usa sigue
  * contra PostgreSQL. Por eso los adaptadores no lanzan: devuelven null / no-op.
@@ -97,9 +98,13 @@ export interface LiveChatComment {
  * Chat del live en tiempo real. `listen` resuelve cuando la conexión termina:
  * porque se abortó `signal`, porque el live se cortó o por un error (lanza).
  */
+export interface LiveChatHandlers {
+  onConnected(): void;
+  onComment?(c: LiveChatComment): void;
+  onViewers?(count: number): void;
+  onGift?(g: LiveGift): void;
+}
+
 export interface LiveChatSource {
-  listen(
-    handlers: { onComment(c: LiveChatComment): void; onViewers(count: number): void; onConnected(): void },
-    signal: AbortSignal,
-  ): Promise<void>;
+  listen(handlers: LiveChatHandlers, signal: AbortSignal): Promise<void>;
 }
