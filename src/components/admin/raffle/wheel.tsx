@@ -36,7 +36,7 @@ export function Wheel({
   const fontSize = Math.max(10, Math.min(26, 520 / Math.max(n, 1)));
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[620px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[min(620px,58vh)]">
       {/* Puntero */}
       <div aria-hidden className="absolute left-1/2 top-[-6px] z-10 -translate-x-1/2">
         <svg width="44" height="52" viewBox="0 0 44 52">
