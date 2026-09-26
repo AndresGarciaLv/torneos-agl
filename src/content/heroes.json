@@ -1,0 +1,130 @@
+[
+  {
+    "slug": "natan",
+    "name": "Natan",
+    "role": "Tirador",
+    "src": "/heroes/natan.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "yi-sun-shin",
+    "name": "Yi Sun-shin",
+    "role": "Asesino",
+    "src": "/heroes/yi-sun-shin.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "eudora",
+    "name": "Eudora",
+    "role": "Mago",
+    "src": "/heroes/eudora.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "atlas",
+    "name": "Atlas",
+    "role": "Tanque",
+    "src": "/heroes/atlas.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "lukas",
+    "name": "Lukas",
+    "role": "Luchador",
+    "src": "/heroes/lukas.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "ling",
+    "name": "Ling",
+    "role": "Asesino",
+    "src": "/heroes/ling.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "fanny",
+    "name": "Fanny",
+    "role": "Asesino",
+    "src": "/heroes/fanny.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "gusion",
+    "name": "Gusion",
+    "role": "Asesino",
+    "src": "/heroes/gusion.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "chou",
+    "name": "Chou",
+    "role": "Luchador",
+    "src": "/heroes/chou.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "kagura",
+    "name": "Kagura",
+    "role": "Mago",
+    "src": "/heroes/kagura.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "layla",
+    "name": "Layla",
+    "role": "Tirador",
+    "src": "/heroes/layla.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "miya",
+    "name": "Miya",
+    "role": "Tirador",
+    "src": "/heroes/miya.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "tigreal",
+    "name": "Tigreal",
+    "role": "Tanque",
+    "src": "/heroes/tigreal.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "lancelot",
+    "name": "Lancelot",
+    "role": "Asesino",
+    "src": "/heroes/lancelot.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "granger",
+    "name": "Granger",
+    "role": "Tirador",
+    "src": "/heroes/granger.webp",
+    "width": 240,
+    "height": 390
+  },
+  {
+    "slug": "esmeralda",
+    "name": "Esmeralda",
+    "role": "Mago",
+    "src": "/heroes/esmeralda.webp",
+    "width": 240,
+    "height": 390
+  }
+]

@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens de Monster_AGL.
+ * Los colores salen del logo oficial (public/branding/logo-monster-agl.png):
+ *   verde neón del contorno   #44E433  (el color más frecuente del borde, medido sobre el PNG)
+ *   dorado de la corona       #F2BE62  (los cuernos y la corona, un punto más apagado para UI)
+ *   verdes oscuros del fondo  #0B3D12 → #062A0C
+ *   plata del rótulo MONSTER  #D7DCD9
+ * shadcn/ui lee las variables semánticas (--primary, --card, --border…): por eso los
+ * componentes heredan la marca sin tocar su código.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: dark;
+
+  /* Marca */
+  --brand: #44e433;
+  --brand-300: #8ff584;
+  --brand-400: #62ee53;
+  --brand-600: #2eb821;
+  --brand-800: #125c17;
+  --brand-900: #0b3d12;
+  --brand-950: #062a0c;
+  --gold: #f2be62;
+  --gold-600: #d69e3c;
+  --silver: #d7dcd9;
+
+  /* Superficies */
+  --background: #050706;
+  --foreground: #eef2ef;
+  --card: rgb(255 255 255 / 0.028);
+  --card-foreground: #eef2ef;
+  --popover: #0a0e0b;
+  --popover-foreground: #eef2ef;
+  --muted: rgb(255 255 255 / 0.05);
+  --muted-foreground: #8d978f;
+  --accent: rgb(68 228 51 / 0.08);
+  --accent-foreground: #eef2ef;
+  --secondary: rgb(255 255 255 / 0.06);
+  --secondary-foreground: #eef2ef;
+
+  /* Acciones */
+  --primary: var(--brand);
+  --primary-foreground: #041203;
+  --destructive: #f0545a;
+  --destructive-foreground: #fff;
+
+  /* Líneas */
+  --border: rgb(255 255 255 / 0.08);
+  --input: rgb(255 255 255 / 0.12);
+  --ring: rgb(68 228 51 / 0.55);
+
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand: var(--brand);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-600: var(--brand-600);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-950: var(--brand-950);
+  --color-gold: var(--gold);
+  --color-gold-600: var(--gold-600);
+  --color-silver: var(--silver);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-glow: 0 0 0 1px rgb(68 228 51 / 0.35), 0 8px 28px -12px rgb(68 228 51 / 0.45);
+  --shadow-glow-gold: 0 0 0 1px rgb(242 190 98 / 0.35), 0 8px 28px -14px rgb(242 190 98 / 0.4);
+
+  --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 0.5s ease-out both;
+  --animate-win: win 0.6s ease-out both;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes win {
+    0% { box-shadow: inset 0 0 0 0 rgb(68 228 51 / 0); }
+    40% { box-shadow: inset 0 0 0 999px rgb(68 228 51 / 0.14); }
+    100% { box-shadow: inset 0 0 0 0 rgb(68 228 51 / 0); }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: rgb(68 228 51 / 0.3);
+  }
+}
+
+@layer components {
+  /* Rejilla de fondo muy tenue, desvanecida hacia los bordes. */
+  .bg-arena-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.028) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.028) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+
+  /* Esquinas cortadas estilo eSports. El tamaño se controla con --cut. */
+  .cut-corners {
+    --cut: 10px;
+    clip-path: polygon(
+      var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)
+    );
+  }
+
+  /* Superficie de tarjeta: ligeramente transparente, borde blanco de muy baja opacidad. */
+  .surface {
+    @apply rounded-xl border border-white/[0.08] bg-white/[0.028] backdrop-blur-[2px];
+  }
+
+  .eyebrow {
+    @apply font-display text-xs font-semibold uppercase tracking-[0.28em] text-brand;
+  }
+
+  /* Brillo del CTA: una sola pasada al hacer hover, nunca en bucle. */
+  .shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+  }
+  .shine:hover::after,
+  .shine:focus-visible::after {
+    transform: translateX(120%);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,44 @@
+# Servicios de datos para desarrollo local.
+# Los puertos se publican solo en 127.0.0.1: no quedan expuestos a la red.
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: monster
+      POSTGRES_PASSWORD: monster_dev_password
+      POSTGRES_DB: monster_torneo
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker:
+      # se monta el directorio padre, como pide la imagen oficial desde la 18.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monster -d monster_torneo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8.10-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --requirepass
+      - monster_dev_redis
+      - --appendonly
+      - "yes"
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "monster_dev_redis", "--no-auth-warning", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
