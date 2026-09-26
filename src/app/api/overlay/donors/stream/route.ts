@@ -54,20 +54,21 @@ export async function GET(req: NextRequest) {
       try {
         write("retry: 2000\n\n");
         await pushBoard();
-        collector = await board.tryBecomeCollector(LEASE_SECONDS);
-        if (collector) {
-          send("status", { state: "connecting" });
-          await board.collect(stop.signal, {
-            onConnected: () => send("status", { state: "live" }),
-            onChange: () => void pushBoard().catch(() => undefined),
-          });
-          // El live terminó o se acabó el tiempo: la siguiente conexión lo retoma.
-        } else {
-          send("status", { state: "watching" });
-          while (!stop.signal.aborted) {
-            await new Promise((r) => setTimeout(r, WATCH_EVERY_MS));
-            if (!stop.signal.aborted) await pushBoard();
+        // Si la copia que escucha el live se cierra, esta toma el relevo en el siguiente ciclo.
+        while (!stop.signal.aborted) {
+          collector = await board.tryBecomeCollector(LEASE_SECONDS);
+          if (collector) {
+            send("status", { state: "connecting" });
+            await board.collect(stop.signal, {
+              onConnected: () => send("status", { state: "live" }),
+              onChange: () => void pushBoard().catch(() => undefined),
+            });
+            // El live terminó o se acabó el tiempo: la siguiente conexión lo retoma.
+            break;
           }
+          send("status", { state: "watching" });
+          await new Promise((r) => setTimeout(r, WATCH_EVERY_MS));
+          if (!stop.signal.aborted) await pushBoard();
         }
       } catch (error) {
         if (error instanceof LiveOfflineError) {
