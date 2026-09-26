@@ -11,7 +11,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  serverExternalPackages: ["pg", "ioredis", "nodemailer"],
+  serverExternalPackages: ["pg", "ioredis", "nodemailer", "tiktok-live-connector"],
   images: { formats: ["image/avif", "image/webp"] },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

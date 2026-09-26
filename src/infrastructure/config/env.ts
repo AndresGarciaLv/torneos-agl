@@ -28,6 +28,10 @@ const serverEnvSchema = z
     MAIL_FROM: z.string().trim().min(3).default("Monster_AGL <monster.aglv@gmail.com>"),
     /** A quién le llega el aviso de cada inscripción. */
     ADMIN_NOTIFY_EMAIL: optional(z.email()),
+    /** Cuenta de TikTok cuyo chat escucha la ruleta. */
+    TIKTOK_USERNAME: z.string().trim().regex(/^@?[A-Za-z0-9._]{2,24}$/).default("monster_agl"),
+    /** Opcional: sube el límite de conexiones del firmador de Euler Stream (eulerstream.com). */
+    EULER_API_KEY: optional(z.string().trim()),
     NEXT_PUBLIC_SITE_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_TIKTOK_URL: z.url().default("https://www.tiktok.com/@monster_agl/live"),
   })

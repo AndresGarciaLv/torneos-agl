@@ -7,6 +7,7 @@ import { GetAdminDashboard } from "@/core/application/use-cases/get-admin-dashbo
 import { GetPublicTournament } from "@/core/application/use-cases/get-public-tournament";
 import { ManageBracket } from "@/core/application/use-cases/manage-bracket";
 import { ManageParticipants } from "@/core/application/use-cases/manage-participants";
+import { ManageRaffle } from "@/core/application/use-cases/manage-raffle";
 import { RegisterParticipant } from "@/core/application/use-cases/register-participant";
 import { SelectWinner } from "@/core/application/use-cases/select-winner";
 import type { Logger, RegistrationNotifier, SessionService } from "@/core/ports/services";
@@ -15,6 +16,7 @@ import { DisabledRegistrationNotifier, SmtpRegistrationNotifier } from "./email/
 import { ConsoleLogger } from "./logging/console-logger";
 import { getPool } from "./postgres/pool";
 import { pgRepositories } from "./postgres/repositories";
+import { PgRaffleRepository } from "./postgres/raffle-repository";
 import { PgUnitOfWork } from "./postgres/unit-of-work";
 import { getRedis } from "./redis/client";
 import { NoCache, RedisCache } from "./redis/redis-cache";
@@ -22,6 +24,7 @@ import { RedisRateLimiter } from "./redis/redis-rate-limiter";
 import { CryptoRandomSource } from "./security/crypto-random";
 import { DisabledHumanVerifier } from "./security/human-verifier";
 import { EnvPasswordVerifier, HmacSessionService } from "./security/hmac-session";
+import { TikTokLiveChat } from "./tiktok/tiktok-live-chat";
 
 /**
  * Composition root: el único lugar que conoce a la vez los casos de uso y los
@@ -58,6 +61,12 @@ function build() {
     manageBracket: new ManageBracket(uow, random, invalidator, logger),
     manageParticipants: new ManageParticipants(uow, random, invalidator, logger),
     selectWinner: new SelectWinner(uow, invalidator, logger),
+    manageRaffle: new ManageRaffle(
+      new PgRaffleRepository(pool),
+      new TikTokLiveChat(env.TIKTOK_USERNAME.replace(/^@/, ""), env.EULER_API_KEY),
+      random,
+      logger,
+    ),
     adminLogin: new AdminLogin(new EnvPasswordVerifier(env.ADMIN_PASSWORD), sessions, rateLimiter, logger),
   };
 }

@@ -1,4 +1,3 @@
-import { AutoRefresh } from "@/components/landing/auto-refresh";
 import { BracketSection } from "@/components/landing/bracket-section";
 import { Hero } from "@/components/landing/hero";
 import { HeroRoster } from "@/components/landing/hero-roster";
@@ -7,6 +6,7 @@ import { LiveBanner } from "@/components/landing/live-banner";
 import { Prizes } from "@/components/landing/prizes";
 import { RegistrationSection } from "@/components/landing/registration-section";
 import { Rules } from "@/components/landing/rules";
+import { LiveSync } from "@/components/live-sync";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
 import type { PublicTournamentView } from "@/core/application/views";
@@ -33,7 +33,6 @@ function acceptsRegistrations(view: PublicTournamentView | null): boolean {
 
 export default async function HomePage() {
   const view = await loadTournament();
-  const liveUpdates = view?.status === "bracket_ready" || view?.status === "live";
   const spots = view ? { taken: view.participantCount, capacity: view.capacity } : null;
   const full = spots !== null && spots.taken >= spots.capacity;
   // Con los 16 lugares ocupados el formulario se cierra aunque siga corriendo el plazo.
@@ -58,7 +57,7 @@ export default async function HomePage() {
         <LiveBanner />
       </main>
       <SiteFooter />
-      {liveUpdates && <AutoRefresh seconds={20} />}
+      {view && <LiveSync />}
     </>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { LoginForm } from "@/components/admin/login-form";
 import { LogoutButton } from "@/components/admin/logout-button";
+import { LiveSync } from "@/components/live-sync";
 import { tournamentSlug } from "@/infrastructure/config/env";
 import { container } from "@/infrastructure/container";
 import { isAdmin } from "@/lib/admin-session";
@@ -30,12 +31,23 @@ export default async function AdminPage() {
               <span className="ml-2 text-sm text-muted-foreground">Admin</span>
             </span>
           </Link>
-          {authed && <LogoutButton />}
+          {authed && (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/admin/ruleta"
+                className="rounded-md border border-gold/40 bg-gold/[0.07] px-3 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-gold transition-colors hover:bg-gold/15"
+              >
+                Ruleta
+              </Link>
+              <LogoutButton />
+            </div>
+          )}
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
         {authed ? <AdminDashboard dashboard={await container().getAdminDashboard.execute(tournamentSlug())} /> : <LoginForm />}
+        {authed && <LiveSync />}
       </main>
     </div>
   );

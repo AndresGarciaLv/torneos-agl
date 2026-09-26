@@ -85,3 +85,21 @@ export interface RegistrationNotifier {
   readonly enabled: boolean;
   notify(notice: RegistrationNotice): Promise<RegistrationNotifyResult>;
 }
+
+export interface LiveChatComment {
+  /** Usuario de TikTok (sin @). */
+  readonly user: string;
+  readonly nickname: string;
+  readonly comment: string;
+}
+
+/**
+ * Chat del live en tiempo real. `listen` resuelve cuando la conexión termina:
+ * porque se abortó `signal`, porque el live se cortó o por un error (lanza).
+ */
+export interface LiveChatSource {
+  listen(
+    handlers: { onComment(c: LiveChatComment): void; onViewers(count: number): void; onConnected(): void },
+    signal: AbortSignal,
+  ): Promise<void>;
+}

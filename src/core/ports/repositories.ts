@@ -1,6 +1,7 @@
 import type { BracketPlan } from "../domain/bracket";
 import type { Match, Slot } from "../domain/match";
 import type { NewParticipant, Participant, ParticipantChanges, PublicPlayer } from "../domain/participant";
+import type { Raffle, RaffleEntry } from "../domain/raffle";
 import type { Tournament, TournamentStatus } from "../domain/tournament";
 
 export interface TournamentRepository {
@@ -64,4 +65,18 @@ export interface UnitOfWork {
    * Si fn lanza, se revierte todo. Lanza NOT_FOUND si el torneo no existe.
    */
   withTournament<T>(slug: string, mode: LockMode, fn: (ctx: TournamentTransactionContext) => Promise<T>): Promise<T>;
+}
+
+export interface RaffleRepository {
+  /** La ruleta más reciente: es la que se muestra y la que escucha el chat. */
+  current(): Promise<Raffle | null>;
+  create(keyword: string, prize: string): Promise<Raffle>;
+  /** Entradas en orden de llegada. */
+  entries(raffleId: string): Promise<RaffleEntry[]>;
+  /** true si entró; false si ese usuario ya estaba. */
+  addEntry(raffleId: string, tiktokUser: string, nickname: string): Promise<boolean>;
+  removeEntry(raffleId: string, tiktokUser: string): Promise<boolean>;
+  winners(raffleId: string): Promise<RaffleEntry[]>;
+  /** false si esa persona ya había ganado en esta ruleta (otro giro simultáneo). */
+  addWinner(raffleId: string, entry: RaffleEntry): Promise<boolean>;
 }

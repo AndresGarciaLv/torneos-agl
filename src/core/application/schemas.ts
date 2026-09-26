@@ -81,6 +81,18 @@ export const adminParticipantSchema = z.discriminatedUnion("action", [
 export type AdminAddParticipant = Extract<z.output<typeof adminParticipantSchema>, { action: "add" }>;
 export type AdminEditParticipant = Extract<z.output<typeof adminParticipantSchema>, { action: "edit" }>;
 
+/** Ruleta del live (solo panel). */
+export const raffleActionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("create"),
+    keyword: z.string().trim().min(1, "Escribe la palabra clave.").max(30, "Máximo 30 caracteres."),
+    prize: z.string().trim().min(1, "Escribe el premio.").max(80, "Máximo 80 caracteres."),
+  }),
+  z.object({ action: z.literal("add"), user: z.string().trim().min(1, "Escribe el usuario.").max(61) }),
+  z.object({ action: z.literal("remove"), user: z.string().trim().min(1).max(61) }),
+  z.object({ action: z.literal("spin") }),
+]);
+
 /** Primer mensaje por campo, listo para pintar debajo de cada input. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
