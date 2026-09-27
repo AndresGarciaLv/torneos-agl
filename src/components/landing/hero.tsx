@@ -12,7 +12,7 @@ interface HeroProps {
   status: TournamentStatus | null;
   participantCount: number | null;
   /** null si la base no respondió: sin fecha fiable no hay contador. */
-  schedule: { startsAt: string; registrationClosesAt: string } | null;
+  startsAt: string | null;
   registrationOpen: boolean;
   /** Solo durante inscripciones: cuántos lugares quedan. */
   spots: { taken: number; capacity: number } | null;
@@ -25,8 +25,16 @@ const STATUS_BADGE: Record<TournamentStatus, string> = {
   finished: "Tenemos campeón",
 };
 
-export function Hero({ status, participantCount, schedule, registrationOpen, spots }: HeroProps) {
+export function Hero({ status, participantCount, startsAt, registrationOpen, spots }: HeroProps) {
   const full = spots !== null && spots.taken >= spots.capacity;
+  const badge =
+    status === null
+      ? null
+      : full
+        ? "Lugares agotados"
+        : status === "registration" && !registrationOpen
+          ? "Inscripciones cerradas"
+          : STATUS_BADGE[status];
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="bg-arena-grid pointer-events-none absolute inset-0" />
@@ -38,7 +46,7 @@ export function Hero({ status, participantCount, schedule, registrationOpen, spo
       <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:pb-24 lg:pt-16">
         <div className="order-2 flex flex-col items-center text-center lg:order-1 lg:items-start lg:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 motion-safe:animate-rise lg:justify-start">
-            {status && <Badge>{full ? "Lugares agotados" : STATUS_BADGE[status]}</Badge>}
+            {badge && <Badge>{badge}</Badge>}
             <Badge variant="outline">
               <Swords aria-hidden /> {site.game}
             </Badge>
@@ -70,9 +78,9 @@ export function Hero({ status, participantCount, schedule, registrationOpen, spo
             </div>
           </dl>
 
-          {schedule && (status === null || status === "registration" || status === "bracket_ready") && (
+          {startsAt && (status === null || status === "registration" || status === "bracket_ready") && (
             <div className="mt-7 motion-safe:animate-rise [animation-delay:250ms]">
-              <Countdown startsAt={schedule.startsAt} registrationClosesAt={schedule.registrationClosesAt} />
+              <Countdown startsAt={startsAt} registrationOpen={registrationOpen} />
             </div>
           )}
 

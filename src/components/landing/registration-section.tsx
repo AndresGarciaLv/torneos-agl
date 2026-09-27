@@ -59,7 +59,7 @@ export function RegistrationSection({
           ) : status === "registration" ? (
             <Closed
               title="Inscripciones cerradas"
-              text="Se acabó el tiempo para inscribirse. En un momento se sortean las llaves: no te pierdas el torneo en vivo."
+              text="El organizador cerró las inscripciones. En un momento se sortean las llaves: no te pierdas el torneo en vivo."
               followUp
             />
           ) : (

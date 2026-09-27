@@ -103,7 +103,7 @@ describe("vista pública", () => {
         slug: "s",
         name: "Torneo",
         startsAt: new Date("2026-09-26T23:00:00Z"),
-        registrationClosesAt: new Date("2026-09-26T22:00:00Z"),
+        registrationClosed: false,
         status: "registration",
         createdAt: new Date(),
         updatedAt: new Date(),

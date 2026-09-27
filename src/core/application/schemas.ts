@@ -51,6 +51,8 @@ export const bracketActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("generate") }),
   z.object({ action: z.literal("regenerate"), confirm: z.literal(true, { error: "Confirma para regenerar." }) }),
   z.object({ action: z.literal("reset"), confirm: z.literal(true, { error: "Confirma para reabrir inscripciones." }) }),
+  z.object({ action: z.literal("close_registration") }),
+  z.object({ action: z.literal("open_registration") }),
 ]);
 export type BracketAction = z.infer<typeof bracketActionSchema>;
 

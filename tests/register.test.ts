@@ -69,13 +69,10 @@ describe("reconocer errores sin instanceof", () => {
 });
 
 /** Base en memoria que acepta una inscripción, para probar lo que pasa DESPUÉS del commit. */
-const CLOSES_AT = new Date("2026-09-26T22:00:00Z"); // 4:00 PM CDMX
-const BEFORE_CLOSE = () => new Date("2026-09-26T21:59:59Z");
-
-function acceptingDb(initialCount = 0): UnitOfWork {
+function acceptingDb(initialCount = 0, registrationClosed = false): UnitOfWork {
   const tournament = {
     id: "t1", slug: "t", name: "Monster_AGL — Torneo 1 vs 1", status: "registration" as const,
-    startsAt: new Date("2026-09-26T23:00:00Z"), registrationClosesAt: CLOSES_AT,
+    startsAt: new Date("2026-09-26T23:00:00Z"), registrationClosed,
     createdAt: new Date(), updatedAt: new Date(),
   };
   let count = initialCount;
@@ -106,7 +103,7 @@ describe("correos de la inscripción", () => {
         return { participantNotified: true, organizerNotified: true };
       },
     };
-    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, notifier, BEFORE_CLOSE);
+    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, notifier);
     const result = await useCase.execute({ slug: "t", input: valid, clientIp: null });
 
     expect(result.confirmationEmailSent).toBe(true);
@@ -126,7 +123,7 @@ describe("correos de la inscripción", () => {
         throw new Error("smtp caído");
       },
     };
-    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, broken, BEFORE_CLOSE);
+    const useCase = new RegisterParticipant(acceptingDb(), memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, broken);
     const result = await useCase.execute({ slug: "t", input: valid, clientIp: null });
     expect(result).toMatchObject({ gamerTag: "Natan<Main>", participantCount: 1, confirmationEmailSent: false });
   });
@@ -189,24 +186,24 @@ describe("correos de la inscripción", () => {
   });
 });
 
-describe("cupo y hora de cierre", () => {
-  const make = (db: UnitOfWork, now: () => Date) =>
-    new RegisterParticipant(db, memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, noMail, now);
+describe("cupo y cierre manual", () => {
+  const make = (db: UnitOfWork) =>
+    new RegisterParticipant(db, memoryLimiter(), noCaptcha, new TournamentCacheInvalidator(cache, logger), logger, noMail);
 
   it("el 16.º entra y el 17.º se queda fuera", async () => {
-    await expect(make(acceptingDb(15), BEFORE_CLOSE).execute({ slug: "t", input: valid, clientIp: null })).resolves.toMatchObject({
+    await expect(make(acceptingDb(15)).execute({ slug: "t", input: valid, clientIp: null })).resolves.toMatchObject({
       participantCount: 16,
     });
-    const error = await make(acceptingDb(16), BEFORE_CLOSE)
+    const error = await make(acceptingDb(16))
       .execute({ slug: "t", input: valid, clientIp: null })
       .catch((e: unknown) => e);
     expect(error).toMatchObject({ code: "TOURNAMENT_FULL" });
   });
 
-  it("a las 4:00 PM en punto ya no se acepta a nadie", async () => {
-    const error = await make(acceptingDb(3), () => CLOSES_AT)
+  it("con el formulario cerrado desde el panel ya no se acepta a nadie", async () => {
+    const error = await make(acceptingDb(3, true))
       .execute({ slug: "t", input: valid, clientIp: null })
       .catch((e: unknown) => e);
-    expect(error).toMatchObject({ code: "REGISTRATION_CLOSED", message: "Las inscripciones cerraron a las 4:00 p.m. (CDMX)." });
+    expect(error).toMatchObject({ code: "REGISTRATION_CLOSED", message: "Las inscripciones ya cerraron." });
   });
 });

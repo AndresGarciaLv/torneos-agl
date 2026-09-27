@@ -32,7 +32,6 @@ export class RegisterParticipant {
     private readonly invalidator: TournamentCacheInvalidator,
     private readonly logger: Logger,
     private readonly notifier: RegistrationNotifier,
-    private readonly now: () => Date = () => new Date(),
   ) {}
 
   async execute(cmd: RegisterParticipantCommand): Promise<RegisterParticipantResult> {
@@ -71,18 +70,12 @@ export class RegisterParticipant {
         ctx.tournament,
         await ctx.participants.count(ctx.tournament.id),
         MAX_PARTICIPANTS,
-        this.now(),
       );
       if (gate === "drawn") {
         throw new DomainError("REGISTRATION_CLOSED", "Las inscripciones ya cerraron: las llaves están sorteadas.");
       }
-      if (gate === "time_over") {
-        const closedAt = new Intl.DateTimeFormat("es-MX", {
-          timeZone: "America/Mexico_City",
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(ctx.tournament.registrationClosesAt);
-        throw new DomainError("REGISTRATION_CLOSED", `Las inscripciones cerraron a las ${closedAt} (CDMX).`);
+      if (gate === "closed") {
+        throw new DomainError("REGISTRATION_CLOSED", "Las inscripciones ya cerraron.");
       }
       if (gate === "full") {
         throw new DomainError("TOURNAMENT_FULL", `Se llenaron los ${MAX_PARTICIPANTS} lugares del torneo.`);

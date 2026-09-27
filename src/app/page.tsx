@@ -26,16 +26,16 @@ async function loadTournament(): Promise<PublicTournamentView | null> {
   }
 }
 
-/** La página se arma en cada petición: con la hora del servidor basta para cerrar el formulario. */
+/** El formulario sigue abierto hasta que el organizador lo cierra desde el panel. */
 function acceptsRegistrations(view: PublicTournamentView | null): boolean {
-  return view !== null && view.status === "registration" && Date.now() < new Date(view.registrationClosesAt).getTime();
+  return view !== null && view.status === "registration" && !view.registrationClosed;
 }
 
 export default async function HomePage() {
   const view = await loadTournament();
   const spots = view ? { taken: view.participantCount, capacity: view.capacity } : null;
   const full = spots !== null && spots.taken >= spots.capacity;
-  // Con los 16 lugares ocupados el formulario se cierra aunque siga corriendo el plazo.
+  // Con los 16 lugares ocupados el formulario se cierra aunque el organizador no lo haya cerrado.
   const registrationOpen = acceptsRegistrations(view) && !full;
   return (
     <>
@@ -44,7 +44,7 @@ export default async function HomePage() {
         <Hero
           status={view?.status ?? null}
           participantCount={view?.participantCount ?? null}
-          schedule={view ? { startsAt: view.startsAt, registrationClosesAt: view.registrationClosesAt } : null}
+          startsAt={view?.startsAt ?? null}
           registrationOpen={registrationOpen}
           spots={view?.status === "registration" ? spots : null}
         />

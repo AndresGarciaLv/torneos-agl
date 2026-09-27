@@ -26,22 +26,16 @@ const subscribe = (tick: () => void) => {
 const nowSeconds = () => Math.floor(Date.now() / 1000) * 1000;
 const noClockOnServer = () => null;
 
-const cdmxTime = (iso: string) =>
-  new Intl.DateTimeFormat("es-MX", { timeZone: "America/Mexico_City", hour: "numeric", minute: "2-digit" }).format(
-    new Date(iso),
-  );
-
 /**
  * Cuenta regresiva al arranque del torneo. La hora sale de PostgreSQL; el reloj es el
  * del navegador. Hasta montar se pintan guiones: el servidor y el cliente no comparten
  * el mismo segundo y un número distinto rompería la hidratación.
  */
-export function Countdown({ startsAt, registrationClosesAt }: { startsAt: string; registrationClosesAt: string }) {
+export function Countdown({ startsAt, registrationOpen }: { startsAt: string; registrationOpen: boolean }) {
   const now = useSyncExternalStore<number | null>(subscribe, nowSeconds, noClockOnServer);
 
   const target = new Date(startsAt).getTime();
   const started = now !== null && now >= target;
-  const registrationOpen = now === null || now < new Date(registrationClosesAt).getTime();
   const parts = now === null ? null : split(target - now);
 
   return (
@@ -62,9 +56,7 @@ export function Countdown({ startsAt, registrationClosesAt }: { startsAt: string
         </ol>
       )}
       <p className="text-xs text-muted-foreground">
-        {registrationOpen
-          ? `Inscripciones abiertas hasta las ${cdmxTime(registrationClosesAt)} (CDMX).`
-          : "Las inscripciones ya cerraron."}
+        {registrationOpen ? "Inscripciones abiertas." : "Las inscripciones ya cerraron."}
       </p>
     </div>
   );

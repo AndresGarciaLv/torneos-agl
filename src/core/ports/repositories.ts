@@ -8,6 +8,7 @@ import type { Tournament, TournamentStatus } from "../domain/tournament";
 export interface TournamentRepository {
   findBySlug(slug: string): Promise<Tournament | null>;
   updateStatus(tournamentId: string, status: TournamentStatus): Promise<void>;
+  setRegistrationClosed(tournamentId: string, closed: boolean): Promise<void>;
 }
 
 export interface ParticipantRepository {

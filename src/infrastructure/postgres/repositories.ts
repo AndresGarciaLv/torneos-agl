@@ -19,7 +19,7 @@ interface TournamentRow {
   slug: string;
   name: string;
   starts_at: Date;
-  registration_closes_at: Date;
+  registration_closed: boolean;
   status: TournamentStatus;
   created_at: Date;
   updated_at: Date;
@@ -30,13 +30,13 @@ export const toTournament = (r: TournamentRow): Tournament => ({
   slug: r.slug,
   name: r.name,
   startsAt: r.starts_at,
-  registrationClosesAt: r.registration_closes_at,
+  registrationClosed: r.registration_closed,
   status: r.status,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
 
-export const TOURNAMENT_COLUMNS = "id, slug, name, starts_at, registration_closes_at, status, created_at, updated_at";
+export const TOURNAMENT_COLUMNS = "id, slug, name, starts_at, registration_closed, status, created_at, updated_at";
 
 export class PgTournamentRepository implements TournamentRepository {
   constructor(private readonly db: Queryable) {}
@@ -51,6 +51,13 @@ export class PgTournamentRepository implements TournamentRepository {
 
   async updateStatus(tournamentId: string, status: TournamentStatus): Promise<void> {
     await this.db.query("UPDATE tournaments SET status = $2, updated_at = now() WHERE id = $1", [tournamentId, status]);
+  }
+
+  async setRegistrationClosed(tournamentId: string, closed: boolean): Promise<void> {
+    await this.db.query("UPDATE tournaments SET registration_closed = $2, updated_at = now() WHERE id = $1", [
+      tournamentId,
+      closed,
+    ]);
   }
 }
 

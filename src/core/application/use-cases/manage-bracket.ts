@@ -30,12 +30,22 @@ export class ManageBracket {
     const result = await this.uow.withTournament(slug, "exclusive", async (ctx) => {
       const { tournament } = ctx;
 
+      if (command.action === "close_registration" || command.action === "open_registration") {
+        if (tournament.status !== "registration") {
+          throw new DomainError("INVALID_STATE", "Las llaves ya están sorteadas: el formulario ya está cerrado.");
+        }
+        await ctx.tournaments.setRegistrationClosed(tournament.id, command.action === "close_registration");
+        const participants = await ctx.participants.count(tournament.id);
+        return { action: command.action, participants, size: 0, byes: 0, rounds: 0 };
+      }
+
       if (command.action === "reset") {
         if (tournament.status === "registration") {
           throw new DomainError("INVALID_STATE", "Las inscripciones ya están abiertas.");
         }
         await ctx.matches.clear(tournament.id);
         await ctx.tournaments.updateStatus(tournament.id, "registration");
+        await ctx.tournaments.setRegistrationClosed(tournament.id, false);
         const participants = await ctx.participants.count(tournament.id);
         return { action: command.action, participants, size: 0, byes: 0, rounds: 0 };
       }

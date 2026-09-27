@@ -28,8 +28,8 @@ export interface PublicTournamentView {
   readonly slug: string;
   readonly name: string;
   readonly startsAt: string;
-  /** Hasta cuándo acepta inscripciones el formulario. La cuenta regresiva la hace el navegador. */
-  readonly registrationClosesAt: string;
+  /** El organizador cerró el formulario desde el panel. */
+  readonly registrationClosed: boolean;
   readonly status: TournamentStatus;
   readonly participantCount: number;
   /** Lugares del torneo. */
@@ -100,7 +100,7 @@ export function buildPublicView(
     slug: tournament.slug,
     name: tournament.name,
     startsAt: tournament.startsAt.toISOString(),
-    registrationClosesAt: tournament.registrationClosesAt.toISOString(),
+    registrationClosed: tournament.registrationClosed,
     status: tournament.status,
     participantCount,
     capacity: MAX_PARTICIPANTS,

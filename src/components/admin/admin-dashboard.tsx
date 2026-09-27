@@ -28,7 +28,11 @@ export function AdminDashboard({ dashboard }: { dashboard: AdminDashboardView })
 
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={<Users aria-hidden />} label="Inscritos" value={String(t.participantCount)} />
-        <Stat icon={<Radio aria-hidden />} label="Estado" value={STATUS_LABEL[t.status]} />
+        <Stat
+          icon={<Radio aria-hidden />}
+          label="Estado"
+          value={t.status === "registration" && t.registrationClosed ? "Inscripciones cerradas" : STATUS_LABEL[t.status]}
+        />
         <Stat
           icon={<Swords aria-hidden />}
           label="Partidas jugadas"
@@ -57,7 +61,12 @@ export function AdminDashboard({ dashboard }: { dashboard: AdminDashboardView })
         </section>
       )}
 
-      <BracketControls status={t.status} participantCount={t.participantCount} matchesDecided={dashboard.matchesDecided} />
+      <BracketControls
+        status={t.status}
+        registrationClosed={t.registrationClosed}
+        participantCount={t.participantCount}
+        matchesDecided={dashboard.matchesDecided}
+      />
 
       {hasBracket && (
         <section className="flex flex-col gap-4">

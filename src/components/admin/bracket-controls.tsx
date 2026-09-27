@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, RotateCcw, Shuffle, Undo2 } from "lucide-react";
+import { Loader2, Lock, LockOpen, RotateCcw, Shuffle, Undo2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +20,12 @@ const MIN = 2;
 
 export function BracketControls({
   status,
+  registrationClosed,
   participantCount,
   matchesDecided,
 }: {
   status: TournamentStatus;
+  registrationClosed: boolean;
   participantCount: number;
   matchesDecided: number;
 }) {
@@ -36,12 +38,15 @@ export function BracketControls({
   return (
     <section className="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="font-display text-xl font-bold uppercase">Sorteo</h2>
+        <h2 className="font-display text-xl font-bold uppercase">Inscripciones y sorteo</h2>
         <p className="text-sm text-muted-foreground">
           {status === "registration"
-            ? participantCount < MIN
-              ? `Se necesitan al menos ${MIN} inscritos para sortear.`
-              : `Sortear cierra las inscripciones y arma el cuadro con los ${participantCount} inscritos.`
+            ? (registrationClosed
+                ? "El formulario público está cerrado. "
+                : "El formulario público está abierto hasta que lo cierres. ") +
+              (participantCount < MIN
+                ? `Se necesitan al menos ${MIN} inscritos para sortear.`
+                : `Sortear cierra las inscripciones y arma el cuadro con los ${participantCount} inscritos.`)
             : status === "finished"
               ? "El torneo terminó."
               : "Las llaves están sorteadas y publicadas."}
@@ -60,12 +65,39 @@ export function BracketControls({
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {status === "registration" ? (
-          <Button
-            disabled={busy || participantCount < MIN}
-            onClick={() => run("/api/admin/bracket", { action: "generate" }, summary)}
-          >
-            {busy ? <Loader2 className="animate-spin" aria-hidden /> : <Shuffle aria-hidden />} Sortear bracket
-          </Button>
+          <>
+            {registrationClosed ? (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  run("/api/admin/bracket", { action: "open_registration" }, () => "Formulario abierto otra vez.")
+                }
+              >
+                <LockOpen aria-hidden /> Abrir inscripciones
+              </Button>
+            ) : (
+              <Confirm
+                trigger={
+                  <Button variant="outline" disabled={busy}>
+                    <Lock aria-hidden /> Cerrar inscripciones
+                  </Button>
+                }
+                title="¿Cerrar inscripciones?"
+                description="El formulario público deja de aceptar inscripciones. Los inscritos se conservan y puedes volver a abrirlo cuando quieras."
+                confirmLabel="Sí, cerrar"
+                onConfirm={() =>
+                  run("/api/admin/bracket", { action: "close_registration" }, () => "Inscripciones cerradas.")
+                }
+              />
+            )}
+            <Button
+              disabled={busy || participantCount < MIN}
+              onClick={() => run("/api/admin/bracket", { action: "generate" }, summary)}
+            >
+              {busy ? <Loader2 className="animate-spin" aria-hidden /> : <Shuffle aria-hidden />} Sortear bracket
+            </Button>
+          </>
         ) : (
           <>
             {status !== "finished" && (

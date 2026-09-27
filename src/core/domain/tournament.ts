@@ -6,29 +6,28 @@ export interface Tournament {
   readonly slug: string;
   readonly name: string;
   readonly startsAt: Date;
-  /** A partir de este instante el formulario público deja de aceptar inscripciones. */
-  readonly registrationClosesAt: Date;
+  /** El organizador cerró el formulario público desde el panel. No hay cierre por hora. */
+  readonly registrationClosed: boolean;
   readonly status: TournamentStatus;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
 
-export type RegistrationGate = "open" | "drawn" | "time_over" | "full";
+export type RegistrationGate = "open" | "drawn" | "closed" | "full";
 
 /**
  * Por qué el formulario público acepta o no una inscripción. El panel no pasa por
- * aquí: el organizador puede dar de alta a alguien después de la hora, pero nunca
- * por encima del cupo.
+ * aquí: el organizador puede dar de alta a alguien con el formulario cerrado, pero
+ * nunca por encima del cupo.
  */
 export function registrationGate(
-  t: Pick<Tournament, "status" | "registrationClosesAt">,
+  t: Pick<Tournament, "status" | "registrationClosed">,
   participantCount: number,
   capacity: number,
-  now: Date,
 ): RegistrationGate {
   if (t.status !== "registration") return "drawn";
   if (participantCount >= capacity) return "full";
-  if (now.getTime() >= t.registrationClosesAt.getTime()) return "time_over";
+  if (t.registrationClosed) return "closed";
   return "open";
 }
 
